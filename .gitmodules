@@ -1,0 +1,3 @@
+[submodule "src/assets/off-canvas"]
+	path = src/assets/off-canvas
+	url = git@github.com:marshallcrosby/off-canvas.git
