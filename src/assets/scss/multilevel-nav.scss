@@ -1,0 +1,28 @@
+/*
+    Multilevel-nav core partials
+*/
+
+@import 'multilevel-nav/variables';
+@import 'multilevel-nav/mixins';
+@import 'multilevel-nav/base';
+@import 'multilevel-nav/buttons';
+@import 'multilevel-nav/layout';
+
+
+
+/* 
+    If you would like to use the slide over functionality, you'll need the off-canvas
+    git submodule in the same directory as the multilvel-nav project.
+*/
+
+@import '../off-canvas/assets/scss/off-canvas.scss';
+@import 'multilevel-nav/layout-slide-over';
+
+
+
+/*
+    Used for demo purposes.
+    You'll likely want to comment this out
+*/
+
+@import 'multilevel-nav/theme';

@@ -1,0 +1,146 @@
+@use "sass:math";
+
+//
+// Aspect ratio
+//
+
+@mixin aspect-ratio($width, $height) {
+	position: relative;
+	&:before {
+		display: block;
+		content: "";
+		width: 100%;
+		padding-top: math.div($height, $width) * 100%;
+	}
+	> .content {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+	}
+}
+
+//
+// Multiply levels of an element
+//
+
+@mixin level-padding-left-multiplier($sel, $levels-deep, $inset) {
+	$selOrig: $sel;
+
+	@for $i from 1 to ($levels-deep + 1) {
+		#{$sel + $i} {
+			> a,
+			.mln__child-controls > a {
+				padding-left: $inset * $i;
+			}
+		}
+    }
+}
+
+
+//
+// Gradient
+//
+
+@mixin background-gradient($startColor, $endColor, $orientation) {
+	background: $startColor;
+
+    @if $orientation == 'vertical' {
+		background: -webkit-linear-gradient(top, $startColor, $endColor);
+		background: linear-gradient(to bottom, $startColor, $endColor);
+    } @else if $orientation == 'horizontal' {
+		background: -webkit-linear-gradient(left, $startColor, $endColor);
+		background: linear-gradient(to right, $startColor, $endColor);
+    } @else {
+		background: -webkit-radial-gradient(center, ellipse cover, $startColor, $endColor);
+		background: radial-gradient(ellipse at center, $startColor, $endColor);
+    }
+}
+
+
+//
+// Slide over base styles
+//
+
+@mixin slide-over-base() {
+    overflow: hidden;
+
+    min-height: 1px;
+
+    transition: min-height $transition-speed-slide-over-height $transition-ease-slide-over-height;
+        
+    [class*="mln__level-"] > a,
+    [class*="mln__level-"] .mln__child-controls > a {
+        padding-left: $padding-menu-item-inset;
+    }
+    
+    .mln__list,
+    .mln__child__list {
+        width: 100%;
+    }
+    
+    .mln__toggle-btn__chevron,
+    .mln__toggle-btn__symbol-custom {
+        display: inline-block;
+
+        transform: rotate(-90deg) !important;
+    }
+            
+    .mln__list,
+    .mln__child__collapse {
+        > * {
+            visibility: hidden !important;
+
+            transition: visibility 0ms linear $transition-speed-child-menu;
+        }
+    }
+    
+    .mln__visible-menu {
+        .mln__child__collapse {
+            > * {
+                visibility: visible !important;
+
+                transition: visibility 0ms linear;
+            }
+        }
+    }
+    
+    .mln__list.mln__visible-menu {
+        > * {
+            visibility: visible !important;
+
+            transition: visibility 0ms linear;
+        }
+    }
+
+    .mln__child__collapse {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        overflow: hidden;
+
+        width: 100%;
+        height: 0 !important;
+
+        transition: transform $transition-speed-child-menu cubic-bezier(.19, 1, .22, 1);
+        transform: translateX(100%);
+
+        background-color: $color-menu-primary;
+    }
+
+    .mln__has-child--showing {
+        > .mln__child__collapse {
+            width: 100%;
+            height: auto !important;
+            min-height: 100%;
+
+            transform: translateX(0);
+        }
+    }
+    
+    .mln__child--transitioning {
+        height: auto !important;
+    }
+}
