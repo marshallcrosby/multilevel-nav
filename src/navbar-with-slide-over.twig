@@ -48,6 +48,40 @@
 								<span class="toggle-hamburger__bun"></span>
 							</span>
 						</button>
+{# 
+						<button class="mln-back-button" type="button">
+							Back to Menu
+						</button>
+
+						<script>
+							window.addEventListener('DOMContentLoaded', function () {
+								$(function () {
+									let mlnBackButton = $('.mln-back-button');
+									let navBarEl = $('.example-navbar');
+
+									mlnBackButton.on('click', function () {
+										navBarEl.find('.mln__has-child--showing')
+											.last()
+											.find('.mln__back-btn')
+											.first()
+											.trigger('click');
+									});
+
+									navBarEl.find('.mln__has-child').on('show.mln.child', function () {
+										if (navBarEl.find('.mln__has-child--showing').length) {
+											mlnBackButton.addClass('mln-back-button--show');
+										}
+									});
+
+									navBarEl.find('.mln__has-child').on('hide.mln.child', function () {
+										if (navBarEl.find('.mln__has-child--showing').length === 0) {
+											mlnBackButton.removeClass('mln-back-button--show');
+										}
+									});
+								});
+							});
+						</script>
+#}
 
 						<!-- Navigation -->
                         <nav class="example-navbar mln mln--navbar mln--navbar-slide-over" data-mln-breakpoint="768" aria-label="primary">
