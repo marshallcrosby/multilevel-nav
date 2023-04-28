@@ -211,7 +211,7 @@
                     var $toggleButton = $(this);
                                     
                     if ($toggleButton.attr('aria-expanded') === 'true') {
-                        $document.on('hidden.offCanvas', function() {
+                        $(document).on('hidden.offCanvas', function() {
                             closeAllChildren();
                         });
                     }
