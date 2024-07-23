@@ -63,6 +63,7 @@
                 'slideTitles': true,
                 'slideTitleLink': false,
                 'backButtonSymbol': '&lsaquo;',
+                'dynamicBackButtonTitle': false,
                 'offCanvasCloseAllMenus': false
             }, options);
                         
@@ -133,7 +134,7 @@
                 var menuSectionLink = $navEl.find(' > .mln__child-controls > a');
                 var menuSectionLabel = menuSectionLink.html();
                 var backButtonSymbol = (settings.backButtonSymbol) ? '<span aria-hidden="true">' + settings.backButtonSymbol + '</span> ' : '';
-                var backButtonText = (menuSectionLink.attr('data-mln-not-linkable')) ? backButtonSymbol + menuSectionLink.text() : backButtonSymbol + 'Back';
+                var backButtonText = (menuSectionLink.attr('data-mln-not-linkable') || settings.dynamicBackButtonTitle) ? backButtonSymbol + menuSectionLink.text() : backButtonSymbol + 'Back';
 
                 $('<div>')
                     .addClass('mln__slide-over-controls')
