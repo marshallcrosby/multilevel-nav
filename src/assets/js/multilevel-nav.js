@@ -598,10 +598,15 @@ function mlnViewport() {
 
                 // Checking touchmove/touchend and applying a hack to get the
                 // toggle button to work on first click for iOS
-                toggleButton.on('touchmove', function () {
-                    touchDrag = true;
-                }).on('touchend click', function (e) {
-
+                // Add touchmove listener with passive option using native JavaScript
+                
+                toggleButton.each(function() {
+                    this.addEventListener('touchmove', function () {
+                        touchDrag = true;
+                    }, { passive: true });
+                });
+                
+                toggleButton.on('touchend click', function (e) {
                     // Prevent first click focus on iOS
                     e.stopPropagation();
                     e.preventDefault();
@@ -609,11 +614,11 @@ function mlnViewport() {
                     var $toggleButton = $(this);
                     var hasChildParent = $toggleButton.closest('.mln__has-child');
                     var associatedMenu = $toggleButton.closest(hasChildParent)
-                            .find('.mln__child__collapse')
-                            .first();
+                        .find('.mln__child__collapse')
+                        .first();
                     var hasChildSiblings = hasChildParent.parent()
-                            .find('.mln__has-child--showing')
-                            .not(hasChildParent);
+                        .find('.mln__has-child--showing')
+                        .not(hasChildParent);
 
                     if (
                         e.type === 'click' ||
@@ -642,6 +647,7 @@ function mlnViewport() {
 
                     touchDrag = false;
                 });
+
 
                 // Show/hide child menus with hoverIntent or just regular hover
                 if (
