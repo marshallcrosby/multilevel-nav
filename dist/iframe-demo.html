@@ -16,7 +16,7 @@
 
         <!-- Primary navbar -->
         <!-- Multilevel Nav parent -->
-        <nav class="example-navbar mln mln--navbar mln--navbar" data-mln-breakpoint="768" aria-label="primary" data-view-markup="associated-script: #scriptExample; btn-x: 10px; btn-y: 50px; btn-z: 0">
+        <nav class="example-navbar mln mln--navbar mln--navbar" data-mln-breakpoint="768" aria-label="primary">
 
             <!-- Placeholder logo -->
             <div class="logo-placeholder">
@@ -202,67 +202,9 @@
                     </div>
                 </div>
 
-                <div class="col col--4">
 
-                    <!-- Basic -->
-                    <nav class="example-stacked mln" aria-label="secondary" data-view-markup="btn-y: -25px; associated-script: #scriptExample2">
 
-                        <!-- Navigation list -->
-                        <ul class="mln__list">
-                            <li><a href="#">Demos</a>
 
-                                <!-- Child list -->
-                                <ul>
-                                    <li><a href="basic.html">Basic</a></li>
-                                    <li><a href="basic--inside-expander.html">Basic inside expander</a></li>
-                                    <li><a href="basic--inside-responsive-expander.html">Basic inside responsive expander</a></li>
-                                    <li><a href="navbar.html">Navbar</a></li>
-                                    <li><a href="navbar-with-mega-menu.html">Navbar with mega menu</a></li>
-                                    <li><a href="navbar-with-backdrops">Navbar with backdrops</a></li>
-                                </ul>
-                            </li>
-                            <li><a href="#">Lorem ipsum</a></li>
-                            <li><a href="#">In luctus</a>
-
-                                <!-- Child list -->
-                                <ul>
-                                    <li><a href="#">Lorem ipsum</a></li>
-                                    <li><a href="#">Sit amet</a></li>
-                                    <li><a href="#">Consectetur</a></li>
-                                    <li><a class="active" href="#">In luctus</a></li>
-                                    <li><a href="#">Vulputate</a></li>
-                                    <li><a href="#">Libero ornare</a>
-
-                                        <!-- Child list -->
-                                        <ul>
-                                            <li><a href="#">Lorem ipsum</a></li>
-                                            <li><a href="#">Sit amet</a></li>
-                                            <li><a href="#">Consectetur</a></li>
-                                            <li><a href="#">In luctus</a></li>
-                                            <li><a href="#">Vulputate</a></li>
-                                            <li><a href="#">Libero ornare</a>
-
-                                                <!-- Child list -->
-                                                <ul>
-                                                    <li><a href="#">Lorem ipsum</a></li>
-                                                    <li><a href="#">Sit amet</a></li>
-                                                    <li><a href="#">Consectetur</a></li>
-                                                    <li><a href="#">In luctus</a></li>
-                                                    <li><a href="#">Vulputate</a></li>
-                                                    <li><a href="#">Libero ornare</a></li>
-                                                </ul>
-                                            </li>
-                                        </ul>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li><a href="#">Consectetur</a></li>
-                            <li><a href="#">In luctus</a></li>
-                            <li><a href="#">Vulputate</a></li>
-                            <li><a href="#">Libero ornare</a></li>
-                        </ul>
-                    </nav>
-                </div>
             </div>
         </div>
     </main>
@@ -276,10 +218,11 @@
 
 
     <script id="scriptExample">
-        $(function() {
+        // Initialize on DOM content loaded - this replaces the jQuery document ready functions
+        document.addEventListener('DOMContentLoaded', function() {
 
             // Initialize navbar
-            $('.example-navbar').multilevelNav({
+            initMultilevelNav('.example-navbar', {
                 'hoverIntent': true,
                 'hoverIntentTimeout': 300,
                 'navbarMenuBackdrop': true,
@@ -287,20 +230,10 @@
                 'expanderBackdrop': true,
             });
 
-            // Example how to close menu from outside the mln plugin
-            $('.logo-placeholder').on('click', function() {
-                $('.example-navbar').find('.mln__toggle-btn[aria-expanded="true"]').trigger('click');
-            });
-        });
-    </script>
-
-    <script id="scriptExample2">
-        $(function() {
-
-            // Initialize navbar
-            $('.example-stacked').multilevelNav({
-                'expandActiveItem': true
-            });
+            // Initialize stacked nav
+            //initMultilevelNav('.example-stacked', {
+            //'expandActiveItem': true
+            //});
         });
     </script>
 

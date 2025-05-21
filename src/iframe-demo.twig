@@ -10,7 +10,6 @@
 			selector_class: 'example-navbar',
 			modifier_class: 'mln--navbar',
 			data_mln_breakpoint: '768',
-			data_view_markup: 'data-view-markup="associated-script: #scriptExample; btn-x: 10px; btn-y: 50px; btn-z: 0"'
 		} %}
 		
 	</header>
@@ -109,14 +108,23 @@
 					</div>
 				</div>
 
-				<div class="col col--4">
+				{# <div class="col col--4">
 					
 					<!-- Basic -->
 					{% include 'partials/layout/_nav-stacked.twig' with {
 						selector_class: 'example-stacked',
 						data_view_markup: 'data-view-markup="btn-y: -25px; associated-script: #scriptExample2"'
 					} %}
-				</div>
+				</div> #}
+				
+				{# <div class="col col--4">
+					
+					<!-- Basic -->
+					{% include 'partials/layout/_nav-stacked.twig' with {
+						selector_class: 'example-stacked',
+						data_view_markup: 'data-view-markup="btn-y: -25px; associated-script: #scriptExample2"'
+					} %}
+				</div> #}
 			</div>
 		</div>
 	</main>
@@ -126,10 +134,13 @@
 {% block page_scripts %}
 
 <script id="scriptExample">
-	$(function() {
+	
+
+	// Initialize on DOM content loaded - this replaces the jQuery document ready functions
+	document.addEventListener('DOMContentLoaded', function() {
 		
 		// Initialize navbar
-		$('.example-navbar').multilevelNav({
+		initMultilevelNav('.example-navbar', {
 			'hoverIntent': true,
 			'hoverIntentTimeout': 300,
 			'navbarMenuBackdrop': true,
@@ -137,20 +148,10 @@
 			'expanderBackdrop': true,
 		});
 		
-		// Example how to close menu from outside the mln plugin
-		$('.logo-placeholder').on('click', function(){
-			$('.example-navbar').find('.mln__toggle-btn[aria-expanded="true"]').trigger('click');
-		});
-	});
-</script>
-
-<script id="scriptExample2">
-	$(function() {
-		
-		// Initialize navbar
-		$('.example-stacked').multilevelNav({
-			'expandActiveItem': true
-		});
+		// Initialize stacked nav
+		//initMultilevelNav('.example-stacked', {
+			//'expandActiveItem': true
+		//});
 	});
 </script>
 
