@@ -1,11 +1,12 @@
 /*!
-  * Multilevel nav v3.4.1 (Vanilla JS Edition)
+  * Multilevel nav v4.0.0 Beta
   */
-  
+
+/* eslint-env es6 */
 let mlnCurrent = 1;
 
 // Get browser width with or without scrollbar
-function mlnViewport() {
+const mlnViewport = () => {
     let view = window;
     let viewString = 'inner';
 
@@ -21,47 +22,34 @@ function mlnViewport() {
 }
 
 // Custom event creator helper
-function createCustomEvent(name, bubbles, cancelable, detail) {
-    bubbles = bubbles !== undefined ? bubbles : true;
-    cancelable = cancelable !== undefined ? cancelable : true;
-    detail = detail !== undefined ? detail : null;
-    
-    let customEvent;
-    if (typeof window.CustomEvent === 'function') {
-        customEvent = new CustomEvent(name, {
-            bubbles: bubbles,
-            cancelable: cancelable,
-            detail: detail
-        });
-    } else {
-        // IE11 polyfill
-        customEvent = document.createEvent('CustomEvent');
-        customEvent.initCustomEvent(name, bubbles, cancelable, detail);
-    }
-    return customEvent;
+const createCustomEvent = (name, detail = null) => {
+    return new CustomEvent(name, {
+        bubbles: true,
+        cancelable: true,
+        detail: detail
+    });
 }
 
 // HoverIntent reimplementation (replacing jQuery plugin)
-function hoverIntent(element, options) {
-    const settings = {
+const hoverIntent = (element, options) => {
+    const settings = Object.assign({
         sensitivity: 7,
         interval: 100,
         timeout: 0,
-        over: function() {},
-        out: function() {},
-        ...options
-    };
+        over: () => {},
+        out: () => {}
+    }, options || {});
     
     let x, y, pX, pY;
     let mouseover = false;
     let timer;
     
-    function track(e) {
+    const track = (e) =>{
         x = e.clientX;
         y = e.clientY;
     }
     
-    function compare(e) {
+    const compare = (e) =>{
         // Compare mouse positions to see if mouse has slowed enough
         if (Math.abs(pX - x) + Math.abs(pY - y) < settings.sensitivity) {
             element.removeEventListener('mousemove', track);
@@ -76,7 +64,7 @@ function hoverIntent(element, options) {
         }
     }
     
-    function delay(e) {
+    const delay = (e) => {
         if (timer) clearTimeout(timer);
         mouseover = false;
         
@@ -89,7 +77,7 @@ function hoverIntent(element, options) {
         }
     }
     
-    function handleMouseOver(e) {
+    const handleMouseOver = (e) => {
         if (timer) clearTimeout(timer);
         
         mouseover = true;
@@ -100,7 +88,7 @@ function hoverIntent(element, options) {
         timer = setTimeout(() => compare(e), settings.interval);
     }
     
-    function handleMouseOut(e) {
+    const handleMouseOut = (e) =>{
         if (timer) clearTimeout(timer);
         element.removeEventListener('mousemove', track);
         
@@ -115,7 +103,7 @@ function hoverIntent(element, options) {
     
     // Return object with cleanup method
     return {
-        remove: function() {
+        remove: () => {
             element.removeEventListener('mouseenter', handleMouseOver);
             element.removeEventListener('mouseleave', handleMouseOut);
             element.removeEventListener('mousemove', track);
@@ -125,19 +113,19 @@ function hoverIntent(element, options) {
 }
 
 // Create resizing event
-(function() {
-    var windowWidth = window.innerWidth;
-    var resizeTO;
+(() => {
+    let windowWidth = window.innerWidth;
+    let resizeTO;
     
-    window.addEventListener('resize', function() {
-        var newWindowWidth = window.innerWidth;
+    window.addEventListener('resize', () => {
+        let newWindowWidth = window.innerWidth;
         
         if (windowWidth !== newWindowWidth) {
             if (resizeTO) {
                 clearTimeout(resizeTO);
             }
             
-            resizeTO = setTimeout(function() {
+            resizeTO = setTimeout(() => {
                 window.dispatchEvent(createCustomEvent('mlnResizeEnd'));
             }, 150);
         }
@@ -147,32 +135,32 @@ function hoverIntent(element, options) {
 })();
 
 // Main multilevel nav function
-function multilevelNav(element, options = {}) {
+const multilevelNavSetup = (element, options = {}) => {
+    
     if (!element) return;
     
     // Setting defaults
-    const settings = {
-        'hoverIntent': false,
-        'hoverIntentTimeout': 250,
-        'autoCloseNavbarMenus': true,
-        'autoDirection': true,
-        'toggleOnClickOnly': false,
-        'expandActiveItem': false,
-        'offCanvasScrollToActiveItem': false,
-        'wholeLinkToggler': false,
-        'topLevelWholeLinkToggler': false,
-        'navbarMenuBackdrop': false,
-        'navbarMegaMenuBackdrop': false,
-        'activeSelector': '.active',
-        'menuCloseOnInPageAnchorClick': false,
-        'expanderCloseOnInPageAnchorClick': false,
-        'autoCloseInactiveMenu': true,
-        'excludeLevel': '-1',
-        'childMenuTogglerSymbol': '<span class="mln__toggle-btn__chevron"></span>',
-        'keepMenuOpenOnFocusOut': false,
-        ...options
-    };
-    
+    const settings = Object.assign({
+        hoverIntent: false,
+        hoverIntentTimeout: 250,
+        autoCloseNavbarMenus: true,
+        autoDirection: true,
+        toggleOnClickOnly: false,
+        expandActiveItem: false,
+        offCanvasScrollToActiveItem: false,
+        wholeLinkToggler: false,
+        topLevelWholeLinkToggler: false,
+        navbarMenuBackdrop: false,
+        navbarMegaMenuBackdrop: false,
+        activeSelector: '.active',
+        menuCloseOnInPageAnchorClick: false,
+        expanderCloseOnInPageAnchorClick: false,
+        autoCloseInactiveMenu: true,
+        excludeLevel: '-1',
+        childMenuTogglerSymbol: '<span class="mln__toggle-btn__chevron"></span>',
+        keepMenuOpenOnFocusOut: false
+    }, options || {});
+
     // Element selectors
     const mlnParentList = element.querySelector('.mln__list');
     const mlnExpander = element.querySelector('.mln__expander');
@@ -183,20 +171,18 @@ function multilevelNav(element, options = {}) {
     let mlnIsPageLoaded = false;
     
     // Show/hide menu(s)
-    function mlnToggleChild(el, action, animate) {
+    const mlnToggleChild = (el, action, animate) => {
         let mlnHasChild;
         
         // Handle different input types (element, event, or jQuery-like object)
         if (el instanceof Element) {
             mlnHasChild = el.closest('.mln__has-child');
         } else if (el && el.target) {
-            // Event object
             mlnHasChild = el.target.closest('.mln__has-child');
         } else if (el && el.closest) {
-            // jQuery-like object with .closest() method
             mlnHasChild = el.closest('.mln__has-child');
         } else {
-            return; // Invalid input
+            return;
         }
         
         if (!mlnHasChild) return;
@@ -259,7 +245,7 @@ function multilevelNav(element, options = {}) {
                 mlnToggleChildCollapse.style.height = collapseHeight + 'px';
                 mlnToggleChildCollapse.setAttribute('aria-hidden', ariaHiddenValue);
                 
-                const handleTransitionEnd = function(e) {
+                const handleTransitionEnd = (e) => {
                     if (e.target !== mlnToggleChildCollapse) return;
                     
                     mlnToggleChildCollapse.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -316,26 +302,29 @@ function multilevelNav(element, options = {}) {
                 mlnToggleChildCollapse.setAttribute('aria-hidden', ariaHiddenValue);
                 mlnToggleChildCollapse.classList.add('mln__child--transitioning');
                 
-                setTimeout(function() {
-                    mlnToggleChildCollapse.style.height = '';
-                    mlnToggleChildCollapse.style.minHeight = '';
+                // Force a reflow to ensure the initial height is applied before transitioning
+                mlnToggleChildCollapse.offsetHeight;
+                
+                // Set up transition end handler before changing height
+                const handleTransitionEnd = (e) => {
+                    if (e.target !== mlnToggleChildCollapse) return;
                     
-                    const handleTransitionEnd = function(e) {
-                        if (e.target !== mlnToggleChildCollapse) return;
-                        
-                        mlnToggleChildCollapse.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
-                        mlnToggleChildCollapse.classList.remove('mln__child--transitioning');
-                        mlnHasChild.dispatchEvent(createCustomEvent('hidden.mln.child'));
-                        mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
-                    };
-                    
-                    mlnToggleChildCollapse.addEventListener(mlnTransitionEnd, handleTransitionEnd);
-                    
-                    // Prevent bubbling from child transitions
-                    Array.from(mlnToggleChildCollapse.children).forEach(child => {
-                        child.addEventListener(mlnTransitionEnd, e => e.stopPropagation());
-                    });
-                }, 30);
+                    mlnToggleChildCollapse.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
+                    mlnToggleChildCollapse.classList.remove('mln__child--transitioning');
+                    mlnHasChild.dispatchEvent(createCustomEvent('hidden.mln.child'));
+                    mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
+                };
+                
+                mlnToggleChildCollapse.addEventListener(mlnTransitionEnd, handleTransitionEnd);
+                
+                // Prevent bubbling from child transitions
+                Array.from(mlnToggleChildCollapse.children).forEach(child => {
+                    child.addEventListener(mlnTransitionEnd, e => e.stopPropagation());
+                });
+                
+                // Trigger the transition by changing height
+                mlnToggleChildCollapse.style.height = '';
+                mlnToggleChildCollapse.style.minHeight = '';
             } else {
                 mlnToggleChildCollapse.classList.remove('mln__child--overflow-visible', 'mln--height-auto');
                 mlnToggleChildCollapse.setAttribute('aria-hidden', ariaHiddenValue);
@@ -348,7 +337,7 @@ function multilevelNav(element, options = {}) {
     }
     
     // Show/hide expander items
-    function mlnToggleExpander(animate) {
+    const mlnToggleExpander = (animate) => {
         if (!mlnExpander) return;
         
         const collapseHelper = mlnExpander.querySelector('.mln__expander__helper');
@@ -368,7 +357,7 @@ function multilevelNav(element, options = {}) {
                     expandBtn.setAttribute('aria-expanded', 'true');
                 }
                 
-                const handleTransitionEnd = function(e) {
+                const handleTransitionEnd = (e) => {
                     if (e.target !== mlnExpander) return;
                     
                     mlnExpander.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -397,12 +386,12 @@ function multilevelNav(element, options = {}) {
                     expandBtn.setAttribute('aria-expanded', 'false');
                 }
                 
-                setTimeout(function() {
+                setTimeout(() => {
                     mlnExpander.classList.remove('mln__expander--showing');
                     mlnExpander.style.height = '';
                 }, 10);
                 
-                const handleTransitionEnd = function(e) {
+                const handleTransitionEnd = (e) => {
                     if (e.target !== mlnExpander) return;
                     
                     mlnExpander.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -424,6 +413,7 @@ function multilevelNav(element, options = {}) {
         if (animate === false && element.closest('.mln--navbar')) {
             const expandBtn = element.querySelector('.mln__expand-btn');
             
+            // if (window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) {
             if (mlnViewport().width < mlnDataBreakpoint) {
                 mlnExpander.classList.remove('mln__expander--showing');
                 mlnExpander.setAttribute('aria-hidden', 'true');
@@ -462,13 +452,13 @@ function multilevelNav(element, options = {}) {
     }
     
     // Assign class to child items that run off the edge of the screen
-    function assignFlowDirection() {
+    const assignFlowDirection = () => {
         if (!settings.autoDirection) return;
         
-        setTimeout(function() {
+        setTimeout(() => {
             const hasChildElements = element.querySelectorAll('.mln__has-child');
             
-            hasChildElements.forEach(function(hasChild) {
+            hasChildElements.forEach(hasChild => {
                 const bodyRect = document.body.getBoundingClientRect();
                 const elemRect = hasChild.getBoundingClientRect();
                 const mlnToggleChildOffset = (elemRect.left - bodyRect.left) + (hasChild.offsetWidth * 2);
@@ -483,13 +473,13 @@ function multilevelNav(element, options = {}) {
     }
     
     // Keep items and parents with active class expanded on load
-    function expandActiveItem() {
+    const expandActiveItem = () => {
         if (!settings.expandActiveItem) return;
         
         const activeSelector = settings.activeSelector;
         const activeItems = mlnParentList.querySelectorAll(activeSelector);
         
-        activeItems.forEach(function(activeItem) {
+        activeItems.forEach(activeItem => {
             activeItem.classList.add('mln__has-child--expand-on-load');
             
             // Find all parent .mln__has-child elements and add the expand class
@@ -502,7 +492,7 @@ function multilevelNav(element, options = {}) {
         
         const itemsToExpand = mlnParentList.querySelectorAll('.mln__has-child--expand-on-load');
         
-        itemsToExpand.forEach(function(item) {
+        itemsToExpand.forEach(item => {
             if (
                 !mlnIsPageLoaded || 
                 (mlnParentList.closest('.mln--navbar') &&
@@ -536,7 +526,7 @@ function multilevelNav(element, options = {}) {
                 }
             }
             
-            setTimeout(function() {
+            setTimeout(() => {
                 body.classList.add('js-off-canvas-scrolled');
             }, 2);
         }
@@ -549,9 +539,10 @@ function multilevelNav(element, options = {}) {
     
     // Add helper div inside expander
     if (mlnExpander) {
+
         // Create helper div
         const helperDiv = document.createElement('div');
-        helperDiv.className = 'mln__expander__helper';
+        helperDiv.classList.add('mln__expander__helper');
         
         // Move all children to the helper div instead of replacing innerHTML
         while (mlnExpander.firstChild) {
@@ -565,14 +556,14 @@ function multilevelNav(element, options = {}) {
     // Open/close menu expander
     const expanderButton = element.querySelector('.mln__expand-btn');
     if (expanderButton) {
-        expanderButton.addEventListener('click', function() {
+        expanderButton.addEventListener('click', () => {
             mlnToggleExpander();
         });
     }
     
     // Add depth class to nested list items
     const nestedLi = mlnParentList.querySelectorAll('li:not(.mln__child__mega-menu li)');
-    nestedLi.forEach(function(li) {
+    nestedLi.forEach(li => {
         // Count parent li elements to determine level
         let level = 1;
         let parent = li.parentElement;
@@ -589,13 +580,13 @@ function multilevelNav(element, options = {}) {
     
     // Find and modify mega menus
     const megaMenus = mlnParentList.querySelectorAll('.mln__child__mega-menu');
-    megaMenus.forEach(function(megaMenu) {
+    megaMenus.forEach(megaMenu => {
         const collapseDiv = document.createElement('div');
-        collapseDiv.className = 'mln__child__collapse';
+        collapseDiv.classList.add('mln__child__collapse');
         collapseDiv.setAttribute('tabindex', '-1');
         
         const helperDiv = document.createElement('div');
-        helperDiv.className = 'mln__child__collapse__helper';
+        helperDiv.classList.add('mln__child__collapse__helper');
         
         // Insert the wrapper structure before the mega menu
         megaMenu.parentNode.insertBefore(collapseDiv, megaMenu);
@@ -612,7 +603,7 @@ function multilevelNav(element, options = {}) {
     // Add mega menu backdrop
     if (settings.navbarMegaMenuBackdrop && !document.querySelector('.mln-backdrop')) {
         const backdrop = document.createElement('div');
-        backdrop.className = 'mln-backdrop';
+        backdrop.classList.add('mln-backdrop');
         body.appendChild(backdrop);
     }
     
@@ -624,7 +615,7 @@ function multilevelNav(element, options = {}) {
     // Filter out excluded lists
     const listsToProcess = childLists.filter(list => !excludedLists.includes(list));
    
-    listsToProcess.forEach(function(parentList) {
+    listsToProcess.forEach(parentList => {
         const existingCollapse = parentList.parentNode.querySelector('.mln__child__collapse');
         
         if (existingCollapse) {
@@ -636,15 +627,16 @@ function multilevelNav(element, options = {}) {
                 parentCollapse.insertBefore(parentList, parentCollapse.firstChild);
             }
         } else if (!parentList.closest('.mln__child__mega-menu')) {
+            
             // Create new collapse structure
             parentList.classList.add('mln__child__list');
             
             const collapseDiv = document.createElement('div');
-            collapseDiv.className = 'mln__child__collapse';
+            collapseDiv.classList.add('mln__child__collapse');
             collapseDiv.setAttribute('tabindex', '-1');
             
             const helperDiv = document.createElement('div');
-            helperDiv.className = 'mln__child__collapse__helper';
+            helperDiv.classList.add('mln__child__collapse__helper');
             
             // Insert the wrapper structure before the list
             parentList.parentNode.insertBefore(collapseDiv, parentList);
@@ -661,7 +653,7 @@ function multilevelNav(element, options = {}) {
     
     // Add mega menu modifier class to top level
     const megaMenuElements = mlnParentList.querySelectorAll('.mln__child__mega-menu');
-    megaMenuElements.forEach(function(megaMenu) {
+    megaMenuElements.forEach(megaMenu => {
         const closestLi = megaMenu.closest('li');
         if (closestLi) {
             closestLi.classList.add('mln__has-child--mega-menu');
@@ -670,14 +662,14 @@ function multilevelNav(element, options = {}) {
     
     // Wrap the parent <a> tag in it's own div
     const hasChildElements = mlnParentList.querySelectorAll('.mln__has-child');
-    hasChildElements.forEach(function(hasChild) {
+    hasChildElements.forEach(hasChild => {
         const directLink = Array.from(hasChild.children).find(child => 
             child.tagName === 'A'
         );
         
         if (directLink) {
             const controlsDiv = document.createElement('div');
-            controlsDiv.className = 'mln__child-controls';
+            controlsDiv.classList.add('mln__child-controls');
             
             // Insert wrapper before the link
             directLink.parentNode.insertBefore(controlsDiv, directLink);
@@ -689,7 +681,7 @@ function multilevelNav(element, options = {}) {
     
     // Add a toggle button to list items with children
     const childNavControls = mlnParentList.querySelectorAll('.mln__child-controls');
-    childNavControls.forEach(function(control) {
+    childNavControls.forEach(control => {
         const parentLink = control.querySelector('a');
         
         if (parentLink) {
@@ -697,7 +689,7 @@ function multilevelNav(element, options = {}) {
             const ariaLabelValue = mlnToggleBtnVerbiage + ' ' + linkText;
             
             const toggleBtn = document.createElement('button');
-            toggleBtn.className = 'mln__toggle-btn';
+            toggleBtn.classList.add('mln__toggle-btn');
             toggleBtn.setAttribute('type', 'button');
             toggleBtn.setAttribute('aria-label', ariaLabelValue);
             toggleBtn.innerHTML = settings.childMenuTogglerSymbol;
@@ -708,7 +700,7 @@ function multilevelNav(element, options = {}) {
     
     // Assign IDs and attributes to child menu elements
     const childCollapse = mlnParentList.querySelectorAll('.mln__child__collapse');
-    childCollapse.forEach(function(collapse, index) {
+    childCollapse.forEach((collapse, index) => {
         const childCollapseId = 'mln' + mlnCurrent + 'ChildCollapse' + (index + 1);
         
         collapse.setAttribute('aria-hidden', 'true');
@@ -743,21 +735,22 @@ function multilevelNav(element, options = {}) {
     if (settings.menuCloseOnInPageAnchorClick) {
         const anchors = element.querySelectorAll('a');
         
-        anchors.forEach(function(anchor) {
+        anchors.forEach(anchor => {
             const href = anchor.getAttribute('href');
+            
             if (!href) return;
             
             const firstChar = href.charAt(0);
             const isPageAnchor = (firstChar === '#');
             
-            anchor.addEventListener('click', function(e) {
+            anchor.addEventListener('click', (e) => {
                 if (
                     isPageAnchor &&
                     !e.target.closest('.mln__toggle-link') &&
                     mlnViewport().width >= mlnDataBreakpoint
                 ) {
                     const showingMenus = element.querySelectorAll('.mln__has-child--showing');
-                    showingMenus.forEach(function(menu) {
+                    showingMenus.forEach(menu => {
                         mlnToggleChild(menu, 'hide', true);
                     });
                 }
@@ -769,14 +762,15 @@ function multilevelNav(element, options = {}) {
     if (settings.expanderCloseOnInPageAnchorClick) {
         const anchors = element.querySelectorAll('a');
         
-        anchors.forEach(function(anchor) {
+        anchors.forEach(anchor => {
             const href = anchor.getAttribute('href');
+            
             if (!href) return;
             
             const firstChar = href.charAt(0);
             const isPageAnchor = (firstChar === '#');
             
-            anchor.addEventListener('click', function(e) {
+            anchor.addEventListener('click', (e) => {
                 if (
                     isPageAnchor &&
                     !e.target.closest('.mln__toggle-link')
@@ -809,7 +803,7 @@ function multilevelNav(element, options = {}) {
             element.classList.add('mln--top-level-whole-link-expand');
         }
         
-        wholeElements.forEach(function(wholeElement) {
+        wholeElements.forEach(wholeElement => {
             const closestHasChild = wholeElement.closest('.mln__has-child');
             const closestToggleBtn = closestHasChild.querySelector('.mln__toggle-btn');
             
@@ -819,7 +813,7 @@ function multilevelNav(element, options = {}) {
             const ariaControlsValue = closestToggleBtn.getAttribute('aria-controls');
             
             const toggleIndicator = document.createElement('span');
-            toggleIndicator.className = 'mln__toggle-indicator';
+            toggleIndicator.classList.add('mln__toggle-indicator');
             toggleIndicator.innerHTML = settings.childMenuTogglerSymbol;
             wholeElement.appendChild(toggleIndicator);
             
@@ -828,7 +822,7 @@ function multilevelNav(element, options = {}) {
             wholeElement.setAttribute('aria-expanded', ariaExpandedValue);
             wholeElement.setAttribute('aria-controls', ariaControlsValue);
             
-            wholeElement.addEventListener('click', function(e) {
+            wholeElement.addEventListener('click', (e) => {
                 wholeElement.focus();
                 e.preventDefault();
             });
@@ -843,15 +837,15 @@ function multilevelNav(element, options = {}) {
     let touchDrag = false;
     
     // Add touchmove listener for iOS fix
-    toggleButtons.forEach(function(button) {
-        button.addEventListener('touchmove', function() {
+    toggleButtons.forEach(button => {
+        button.addEventListener('touchmove', () => {
             touchDrag = true;
         }, { passive: true });
     });
     
     // Handle click and touch events
-    toggleButtons.forEach(function(button) {
-        const handleInteraction = function(e) {
+    toggleButtons.forEach(button => {
+        const handleInteraction = (e) => {
             e.stopPropagation();
             e.preventDefault();
             
@@ -901,11 +895,11 @@ function multilevelNav(element, options = {}) {
     
     // Show/hide child menus with hoverIntent or just regular hover
     if (!settings.toggleOnClickOnly) {
-        hasChildElements.forEach(function(hasChild) {
+        hasChildElements.forEach(hasChild => {
             const associatedMenu = hasChild.querySelector('.mln__child__collapse');
             
             // Hover functions
-            const showMenu = function() {
+            const showMenu = () => {
                 if (associatedMenu) {
                     associatedMenu.setAttribute('data-mln-active-status', 'on');
                 }
@@ -918,7 +912,7 @@ function multilevelNav(element, options = {}) {
                 }
             };
             
-            const hideMenu = function() {
+            const hideMenu = () => {
                 if (associatedMenu) {
                     associatedMenu.setAttribute('data-mln-active-status', 'off');
                 }
@@ -942,7 +936,7 @@ function multilevelNav(element, options = {}) {
                 });
             } else {
                 // Use standard hover events
-                hasChild.addEventListener('mouseenter', function() {
+                hasChild.addEventListener('mouseenter', () => {
                     if (
                         mlnViewport().width >= mlnDataBreakpoint &&
                         hasChild.closest('.mln--navbar')
@@ -961,7 +955,7 @@ function multilevelNav(element, options = {}) {
                     }
                 });
                 
-                hasChild.addEventListener('mouseleave', function() {
+                hasChild.addEventListener('mouseleave', () => {
                     if (
                         mlnViewport().width >= mlnDataBreakpoint &&
                         hasChild.closest('.mln--navbar')
@@ -980,7 +974,7 @@ function multilevelNav(element, options = {}) {
     if (mlnParentList) {
         let isCurrentMenuFocused;
         
-        mlnParentList.addEventListener('keydown', function(e) {
+        mlnParentList.addEventListener('keydown', (e) => {
             const pressedKeyCode = e.keyCode;
             const eTarget = e.target;
             
@@ -1026,7 +1020,7 @@ function multilevelNav(element, options = {}) {
                     
                     // Close all showing menus
                     const showingItems = element.querySelectorAll('.mln__has-child--showing');
-                    showingItems.forEach(function(item) {
+                    showingItems.forEach(item => {
                         mlnToggleChild(item, 'hide', true);
                     });
                 }
@@ -1039,7 +1033,7 @@ function multilevelNav(element, options = {}) {
         });
         
         // Close inactive menus when tabbing out of them
-        mlnParentList.addEventListener('keyup', function(e) {
+        mlnParentList.addEventListener('keyup', (e) => {
             const eTarget = e.target;
             
             if (
@@ -1049,7 +1043,7 @@ function multilevelNav(element, options = {}) {
                 eTarget.closest('.mln--navbar')
             ) {
                 const showingItems = element.querySelectorAll('.mln__has-child--showing');
-                showingItems.forEach(function(item) {
+                showingItems.forEach(item => {
                     mlnToggleChild(item, 'hide', true);
                 });
             }
@@ -1057,17 +1051,17 @@ function multilevelNav(element, options = {}) {
         
         // Close any menu when leaving currently focused menu parent
         if (!settings.keepMenuOpenOnFocusOut) {
-            mlnParentList.addEventListener('focusout', function(e) {
-                setTimeout(function() {
+            mlnParentList.addEventListener('focusout', (e) => {
+                setTimeout(() => {
                     if (mlnViewport().width >= mlnDataBreakpoint) {
                         const activeElement = document.activeElement;
                         const nonActiveMenus = Array.from(document.querySelectorAll('.mln--navbar')).filter(
                             menu => !menu.contains(activeElement)
                         );
                         
-                        nonActiveMenus.forEach(function(menu) {
+                        nonActiveMenus.forEach(menu => {
                             const showingItems = menu.querySelectorAll('.mln__has-child--showing');
-                            showingItems.forEach(function(item) {
+                            showingItems.forEach(item => {
                                 mlnToggleChild(item, 'hide', true);
                             });
                         });
@@ -1086,7 +1080,7 @@ function multilevelNav(element, options = {}) {
                         !e.target.closest('.mln__has-child--showing')
                     ) {
                         const showingItems = element.querySelectorAll('.mln__has-child--showing');
-                        showingItems.forEach(function(item) {
+                        showingItems.forEach(item => {
                             mlnToggleChild(item, 'hide', true);
                         });
                     }
@@ -1096,19 +1090,19 @@ function multilevelNav(element, options = {}) {
     }
     
     // Add special class to the current showing menu
-    element.addEventListener('transition.mln.child', function() {
+    element.addEventListener('transition.mln.child', () => {
         const visibleMenus = element.querySelectorAll('.mln__visible-menu');
         visibleMenus.forEach(menu => menu.classList.remove('mln__visible-menu'));
     });
     
     // Add event listeners for show/hide/initialize events
-    ['hide.mln.child', 'show.mln.child'].forEach(function(eventName) {
-        element.addEventListener(eventName, function() {
+    ['hide.mln.child', 'show.mln.child'].forEach(eventName => {
+        element.addEventListener(eventName, () => {
             updateVisibleMenu();
         });
     });
     
-    function updateVisibleMenu() {
+    const updateVisibleMenu = () => {
         const showingItems = element.querySelectorAll('.mln__has-child--showing');
         
         if (showingItems.length === 0) {
@@ -1125,14 +1119,14 @@ function multilevelNav(element, options = {}) {
     }
     
     // Handle resize end events
-    window.addEventListener('mlnResizeEnd', function() {
+    window.addEventListener('mlnResizeEnd', () => {
         if (
             mlnViewport().width >= mlnDataBreakpoint &&
             settings.autoCloseNavbarMenus === true &&
             settings.expandActiveItem === false
         ) {
             const showingItems = element.querySelectorAll('.mln__has-child--showing');
-            showingItems.forEach(function(item) {
+            showingItems.forEach(item => {
                 mlnToggleChild(item, 'hide', false);
             });
             
@@ -1172,16 +1166,28 @@ function multilevelNav(element, options = {}) {
 }
 
 // Helper function to initialize multilevelNav on multiple elements
-function initMultilevelNav(selector, options) {
+const multilevelNav = (selector, options) => {
     const elements = document.querySelectorAll(selector);
     const instances = [];
     
     elements.forEach(element => {
-        const instance = multilevelNav(element, options);
+        const instance = multilevelNavSetup(element, options);
         if (instance) {
             instances.push(instance);
         }
     });
     
     return instances;
+}
+
+// Write a jquery initializer for the multilevelNav function
+if (typeof jQuery !== 'undefined') {
+    jQuery.fn.multilevelNav = function(options) {
+        return this.each(function() {
+            const $this = jQuery(this);
+            const instance = multilevelNav($this, options);
+            
+            $this.data('multilevelNav', instance);
+        });
+    };
 }

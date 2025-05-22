@@ -196,12 +196,12 @@
 {% block page_scripts %}
 
 <script id="scriptExample1">
-	$('.example-selector-menu').multilevelNav();
+	multilevelNav('.example-selector-menu');
 </script>
 
 
 <script id="scriptExample2">
-	$('.example-selector-navbar').multilevelNav({
+	multilevelNav('.example-selector-navbar',{
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300
 	});
@@ -209,22 +209,22 @@
 
 
 <script id="scriptExample3">
-	$('.example-selector-menu-inside-expander').multilevelNav();
+	multilevelNav('.example-selector-menu-inside-expander');
 </script>
 
 
 <script id="scriptExample4">
-	$('.example-selector-menu-inside-responsive-expander').multilevelNav();
+	multilevelNav('.example-selector-menu-inside-responsive-expander');
 </script>
 
 
 <script id="scriptExample5">
-	$('.example-selector-menu-with-mega-menu').multilevelNav();
+	multilevelNav('.example-selector-menu-with-mega-menu');
 </script>
 
 
 <script id="scriptExample6">
-	$('.example-selector-navbar-with-mega-menu').multilevelNav({
+	multilevelNav('.example-selector-navbar-with-mega-menu', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300
 	});
@@ -232,7 +232,7 @@
 
 
 <script id="scriptExample7">
-	$('.example-selector-navbar-with-backdrop').multilevelNav({
+	multilevelNav('.example-selector-navbar-with-backdrop', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300,
 		'navbarMenuBackdrop': true,
@@ -242,14 +242,14 @@
 
 
 <script id="scriptExample8">
-	$('.example-selector-menu-expand-to-active').multilevelNav({
+	multilevelNav('.example-selector-menu-expand-to-active', {
 		'expandActiveItem': true
 	});
 </script>
 
 
 <script id="scriptExample9">
-	$('.example-selector-navbar-click-only').multilevelNav({
+	multilevelNav('.example-selector-navbar-click-only', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300,
 		'toggleOnClickOnly': true
@@ -258,7 +258,7 @@
 
 
 <script id="scriptExample10">
-	$('.example-selector-navbar-whole-link-click-only').multilevelNav({
+	multilevelNav('.example-selector-navbar-whole-link-click-only', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300,
 		'toggleOnClickOnly': true,
@@ -268,7 +268,7 @@
 
 
 <script id="scriptExample11">
-	$('.example-selector-navbar-top-level-whole-link-click-only').multilevelNav({
+	multilevelNav('.example-selector-navbar-top-level-whole-link-click-only', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300,
 		'toggleOnClickOnly': true,
@@ -278,14 +278,14 @@
 
 
 <script id="scriptExample12">
-	$('.example-selector-menu-exclude-level').multilevelNav({
+	multilevelNav('.example-selector-menu-exclude-level', {
 		'excludeLevel': 2
 	});
 </script>
 
 
 <script id="scriptExample13">
-	$('.example-selector-navbar-exclude-level').multilevelNav({
+	multilevelNav('.example-selector-navbar-exclude-level', {
 		'hoverIntent': true,
 		'hoverIntentTimeout': 300,
 		'excludeLevel': 2
@@ -298,16 +298,15 @@
 	// Dynamically adjust z-index of demo navs so they display correctly
 	//
 
-	$(function() {
-		var allMln = $('.mln');
+	document.addEventListener('DOMContentLoaded', function() {
+		var allMln = document.querySelectorAll('.mln');
 		var allLength = allMln.length;
 
-		allMln.each(function(){
-			$(this).css('z-index', allLength);
-
+		allMln.forEach(function(element) {
+			element.style.zIndex = allLength;
 			allLength--;
-		})
-	})
+		});
+	});
 </script>
 
 

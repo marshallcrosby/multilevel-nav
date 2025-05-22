@@ -1,42 +1,52 @@
-(function ($) {
+(function() {
     'use strict';
 
     // Global variables
-    var $document = $(document);
-    var $window = $(window);
-    var $body = $('body');
-    var toggleBtn = $('.toggle-off-canvas');
-    var offCanvasElement = $('.l-off-canvas');
-    var offCanvasContent = $('.l-header');
-    var offCanvasCanvas = $('.l-canvas');
-    var headerHeight = offCanvasContent.outerHeight();
-    var docScrollLoc = 0;
-    var currentLoc = 0;
-    var focusBeforeOffCanvas;
-    var tapping = false;
-    var touchStartX;
-    var offCanvasBreakpoint = $body.attr('data-off-canvas-breakpoint');
+    const document = window.document;
+    const body = document.body;
+    const toggleBtns = document.querySelectorAll('.toggle-off-canvas');
+    const offCanvasElement = document.querySelector('.l-off-canvas');
+    const offCanvasContent = document.querySelector('.l-header');
+    const offCanvasCanvas = document.querySelector('.l-canvas');
+    const headerHeight = offCanvasContent ? offCanvasContent.offsetHeight : 0;
+    let docScrollLoc = 0;
+    let currentLoc = 0;
+    let focusBeforeOffCanvas;
+    let tapping = false;
+    let touchStartX;
+    const offCanvasBreakpoint = body.getAttribute('data-off-canvas-breakpoint');
+    
+    // Custom event creator
+    function createCustomEvent(name, detail = null) {
+        return new CustomEvent(name, {
+            bubbles: true,
+            cancelable: true,
+            detail: detail
+        });
+    }
 
-    // Resize delay
-    var windowWidth = $window.width();
-    $window.on('resize', function() {
-        var newWindowWidth = $window.width();
+    // Resize delay implementation
+    let windowWidth = window.innerWidth;
+    let resizeTimeout;
+    
+    window.addEventListener('resize', function() {
+        const newWindowWidth = window.innerWidth;
 
         if (windowWidth !== newWindowWidth) {
-            if (this.resizeTO) {
-                clearTimeout(this.resizeTO);
+            if (resizeTimeout) {
+                clearTimeout(resizeTimeout);
             }
-            this.resizeTO = setTimeout(function() {
-                $(this).trigger('ocResizeEnd');
+            resizeTimeout = setTimeout(function() {
+                window.dispatchEvent(createCustomEvent('ocResizeEnd'));
             }, 150);
         }
         windowWidth = newWindowWidth;
     });
 
     // Get browser width with or without scrollbar
-    var viewport = function() {
-        var view = window;
-        var viewString = 'inner';
+    function viewport() {
+        let view = window;
+        let viewString = 'inner';
 
         if (!('innerWidth' in window)) {
             viewString = 'client';
@@ -47,213 +57,283 @@
             width: view[viewString + 'Width'],
             height: view[viewString + 'Height']
         };
-    };
+    }
 
+    // Check for specific user agent strings
     function agentHas(keyword) {
         return navigator.userAgent.toLowerCase().search(keyword.toLowerCase()) > -1;
     }
     
+    // Safari detection
     function isSafari() {
-        return (!!window.ApplePaySetupFeature || !!window.safari) && agentHas('Safari') && !agentHas('Chrome') && !agentHas('CriOS');
+        return (!!window.ApplePaySetupFeature || !!window.safari) && 
+               agentHas('Safari') && !agentHas('Chrome') && !agentHas('CriOS');
     }
 
+    // Add iOS class if using Safari
     if (isSafari()) {
-        $body.addClass('is-ios');
+        body.classList.add('is-ios');
     }
 
-    // Trap the keyboard to the off canvas elements when off canvas is showing
-    var trapKeyboardToOC = function() {
+    /**
+     * Trap keyboard focus within the off-canvas menu when it's open
+     */
+    function trapKeyboardToOC() {
+        // Store the element that had focus before opening
+        focusBeforeOffCanvas = document.activeElement;
 
-        focusBeforeOffCanvas = $(':focus');
+        // Find all focusable elements within the off-canvas
+        const tabbable = Array.from(offCanvasElement.querySelectorAll(
+            'a[href], area[href], input:not([disabled]), select:not([disabled]), ' +
+            'textarea:not([disabled]), button:not([disabled]), iframe, object, ' +
+            'embed, [tabindex="0"], [contenteditable]'
+        ));
 
-        var tabbable = offCanvasElement.find(
-            'a[href],' +
-            'area[href],' +
-            'input:not([disabled]),' +
-            'select:not([disabled]),' +
-            'textarea:not([disabled]),' +
-            'button:not([disabled]),' +
-            'iframe,' +
-            'object,' +
-            'embed,' +
-            '[tabindex="0"],' +
-            '[contenteditable]'
-        );
+        const firstTabbable = tabbable[0];
+        const lastTabbable = tabbable[tabbable.length - 1];
 
-        var firstTabbable = tabbable.first();
-        // var lastTabbable = offCanvasElement.find('.js-tabfix');
-        var lastTabbable = tabbable.last();
-
-        // Set focus on first input
-        var mlnActive = $('.mln__list .active').last();
+        // Set focus on first input or active menu item
+        const mlnActive = document.querySelector('.mln__list .active:last-child');
         
-        if (!mlnActive .length) {
-            firstTabbable.trigger('focus'); 
+        if (!mlnActive) {
+            firstTabbable && firstTabbable.focus();
         }
         
-        //Escape key press
-        offCanvasElement.on('keydown', function(e) {
-            var childShowingAmount = $(this).find('.mln__child--transitioning').length;
+        // Handle escape key to close menu
+        const keydownHandler = function(e) {
+            const childShowingAmount = offCanvasElement.querySelectorAll('.mln__child--transitioning').length;
 
             if (e.key === 'Escape' && !childShowingAmount) {
                 e.preventDefault();
                 toggleOffCanvas('hide');
             }
-        });
+        };
+        
+        offCanvasElement.addEventListener('keydown', keydownHandler);
 
         // Redirect last tab to first input
-        lastTabbable.on('keydown', function(e) {
+        lastTabbable && lastTabbable.addEventListener('keydown', function(e) {
             if (e.key === 'Tab' && !e.shiftKey) {
                 e.preventDefault();
-                firstTabbable.trigger('focus');
+                firstTabbable && firstTabbable.focus();
             }
         });
 
         // Redirect first shift+tab to last input
-        firstTabbable.on('keydown', function(e) {
+        firstTabbable && firstTabbable.addEventListener('keydown', function(e) {
             if (e.key === 'Tab' && e.shiftKey) {
                 e.preventDefault();
-                lastTabbable.trigger('focus');
+                lastTabbable && lastTabbable.focus();
             }
         });
 
         // Focus on the off canvas element
-        offCanvasElement.trigger('focus');
-    };
+        offCanvasElement.focus();
+    }
 
-
-    var toggleOffCanvas = function(action) {
-        docScrollLoc = $document.scrollTop();
+    /**
+     * Toggle the off-canvas menu visibility
+     * @param {string} action - 'show', 'hide', or undefined to toggle
+     */
+    function toggleOffCanvas(action) {
+        if (!offCanvasElement) return;
+        
+        docScrollLoc = window.pageYOffset || document.documentElement.scrollTop;
 
         // Close off canvas
-        if ($body.hasClass('js-off-canvas-showing') || action === 'undefined' || action === 'hide') {   
-            $document.trigger($.Event('hide.offCanvas'));
-                     
-            $body.removeClass('js-off-canvas-showing');
+        if (body.classList.contains('js-off-canvas-showing') || action === 'undefined' || action === 'hide') {   
+            document.dispatchEvent(createCustomEvent('hide.offCanvas'));
+            
+            body.classList.remove('js-off-canvas-showing');
 
             // iOS Safari scroll canvas to the original canvas position
-            if (isSafari() && $body.hasClass('has-header-fixed')) {
-                offCanvasCanvas.css('top', '');
+            if (isSafari() && body.classList.contains('has-header-fixed')) {
+                offCanvasCanvas.style.top = '';
 
-                $('html, body')
-                    .css('scroll-behavior', 'auto')
-                    .animate({
-                        scrollTop: currentLoc
-                    }, 0)
-                    .css('scroll-behavior', '');
+                document.documentElement.style.scrollBehavior = 'auto';
+                document.body.style.scrollBehavior = 'auto';
+                
+                window.scrollTo({
+                    top: currentLoc,
+                    behavior: 'auto'
+                });
+                
+                document.documentElement.style.scrollBehavior = '';
+                document.body.style.scrollBehavior = '';
             }
 
             // After off canvas is hidden
-            $('.slide-over-transition')
-                .first()
-                .one('transitionend webkitTransitionEnd oTransitionEnd', function () {
-                    if(!$body.hasClass('js-off-canvas-showing')) {
-                        offCanvasElement.addClass('js-l-off-canvas-hide');
+            const slideOver = document.querySelector('.slide-over-transition');
+            if (slideOver) {
+                const transitionHandler = function(e) {
+                    if (e.target !== slideOver) return;
+                    
+                    if(!body.classList.contains('js-off-canvas-showing')) {
+                        offCanvasElement.classList.add('js-l-off-canvas-hide');
                     }
-                    $document.trigger($.Event('hidden.offCanvas'));
-                }).children().on('transitionend webkitTransitionEnd oTransitionEnd', function () {
-                    return false;
+                    
+                    document.dispatchEvent(createCustomEvent('hidden.offCanvas'));
+                    slideOver.removeEventListener('transitionend', transitionHandler);
+                };
+                
+                slideOver.addEventListener('transitionend', transitionHandler);
+                
+                // Prevent event bubbling from children
+                Array.from(slideOver.children).forEach(child => {
+                    child.addEventListener('transitionend', e => e.stopPropagation());
                 });
+            }
 
-            // Syncing aria-expanded attribute on the menu button
-            toggleBtn.each(function(){
-                $(this).attr('aria-expanded', 'false');
+            // Update aria-expanded attribute on all toggle buttons
+            toggleBtns.forEach(btn => {
+                btn.setAttribute('aria-expanded', 'false');
             });
 
-            // Focus on off canvas button
-            focusBeforeOffCanvas.trigger('focus');
+            // Restore focus to the element that had it before
+            if (focusBeforeOffCanvas) {
+                focusBeforeOffCanvas.focus();
+            }
 
-        } else if (!$body.hasClass('js-off-canvas-showing') || action === 'show') { // Open off canvas
-            $document.trigger($.Event('show.offCanvas'));
+        } else if (!body.classList.contains('js-off-canvas-showing') || action === 'show') {
+            // Open off canvas
+            document.dispatchEvent(createCustomEvent('show.offCanvas'));
             
-            offCanvasElement.removeClass('js-l-off-canvas-hide');
+            offCanvasElement.classList.remove('js-l-off-canvas-hide');
 
             // iOS Safari set location of canvas so the user doesn't lose where they are
-            if (isSafari() && $body.hasClass('has-header-fixed')) {
-                offCanvasCanvas.css('top', -(docScrollLoc - headerHeight));
+            if (isSafari() && body.classList.contains('has-header-fixed')) {
+                offCanvasCanvas.style.top = `${-(docScrollLoc - headerHeight)}px`;
             }
 
-            $body.addClass('js-off-canvas-showing');
+            body.classList.add('js-off-canvas-showing');
             currentLoc = docScrollLoc;
 
-            // Syncing aria-expanded attribute on the menu button
-            toggleBtn.each(function(){
-                $(this).attr('aria-expanded', 'true');
+            // Update aria-expanded attribute on all toggle buttons
+            toggleBtns.forEach(btn => {
+                btn.setAttribute('aria-expanded', 'true');
             });
             
-            $('.slide-over-transition')
-                .first()
-                .one('transitionend webkitTransitionEnd oTransitionEnd', function () {
+            const slideOver = document.querySelector('.slide-over-transition');
+            if (slideOver) {
+                const transitionHandler = function(e) {
+                    if (e.target !== slideOver) return;
+                    
                     trapKeyboardToOC();
-                    $document.trigger($.Event('shown.offCanvas'));
-                }).children().on('transitionend webkitTransitionEnd oTransitionEnd', function () {
-                    return false;
+                    document.dispatchEvent(createCustomEvent('shown.offCanvas'));
+                    slideOver.removeEventListener('transitionend', transitionHandler);
+                };
+                
+                slideOver.addEventListener('transitionend', transitionHandler);
+                
+                // Prevent event bubbling from children
+                Array.from(slideOver.children).forEach(child => {
+                    child.addEventListener('transitionend', e => e.stopPropagation());
                 });
-        }
-    };
-
-    // Set height of the off canvas element
-    var setOffCanvasHeight = function() {
-        if (!$body.hasClass('has-header-fixed')) {
-            var offCanvasHeight = $('.l-off-canvas__helper').outerHeight();
-            var surroundHeight = $('.l-surround').outerHeight();
-            var setHeight;
-
-            if (offCanvasHeight >= surroundHeight) {
-                setHeight = offCanvasHeight;
             } else {
-                setHeight = surroundHeight;
+                // If no transition element, just trap the keyboard
+                trapKeyboardToOC();
+                document.dispatchEvent(createCustomEvent('shown.offCanvas'));
             }
+        }
+    }
 
-            setTimeout(function(){
+    /**
+     * Set the height of the off-canvas element based on content
+     */
+    function setOffCanvasHeight() {
+        if (!body.classList.contains('has-header-fixed') && offCanvasElement) {
+            const offCanvasHelper = document.querySelector('.l-off-canvas__helper');
+            const surround = document.querySelector('.l-surround');
+            
+            if (!offCanvasHelper || !surround) return;
+            
+            const offCanvasHeight = offCanvasHelper.offsetHeight;
+            const surroundHeight = surround.offsetHeight;
+            const setHeight = (offCanvasHeight >= surroundHeight) ? offCanvasHeight : surroundHeight;
+
+            setTimeout(function() {
                 if (viewport().width < offCanvasBreakpoint) {
-                    offCanvasElement.css('min-height', setHeight);
+                    offCanvasElement.style.minHeight = `${setHeight}px`;
                 } else {
-                    offCanvasElement.css('min-height', '');
+                    offCanvasElement.style.minHeight = '';
                 }
             }, 300);
         }
-    };
+    }
 
-    // Build overlay that covers up the page content so it can't be interacted with when off canvas nav is enabled
-    $('<div></div>')
-        .addClass('l-off-canvas-overlay')
-        .prependTo('.l-surround');
+    // Create overlay that covers page content when off-canvas is active
+    function createOverlay() {
+        const surround = document.querySelector('.l-surround');
+        if (!surround) return;
+        
+        const overlay = document.createElement('div');
+        overlay.classList.add('l-off-canvas-overlay');
+        surround.prepend(overlay);
+        
+        // Add click handler to close menu when overlay is clicked
+        overlay.addEventListener('click', function() {
+            toggleOffCanvas('hide');
+        });
+    }
+    
+    // Initialize overlay
+    createOverlay();
 
-    // Get X location of user touch
-    $body.on('touchstart', function(e) {
-        touchStartX = e.originalEvent.touches[0].clientX;
+    // Touch event handling
+    body.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
     });
 
-    // If user touches and moves a bit, close the hide the off canvas
-    $body.on('touchmove', function(e) {
-        var touchRight = e.originalEvent.changedTouches[0].clientX;
+    // Handle touch movement to close the menu with swipe
+    body.addEventListener('touchmove', function(e) {
+        if (!e.changedTouches || !e.changedTouches[0]) return;
+        
+        const touchRight = e.changedTouches[0].clientX;
+        const offCanvasShowing = body.classList.contains('js-off-canvas-showing');
+        const isRightAligned = body.classList.contains('off-canvas-right');
 
-        if (touchStartX - 200 > touchRight && $body.hasClass('js-off-canvas-showing') &&
-            !$body.hasClass('off-canvas-right') && tapping !== true) {
-            toggleOffCanvas();
-        } else if (touchStartX + 200 < touchRight && $body.hasClass('js-off-canvas-showing') &&
-            $body.hasClass('off-canvas-right') && tapping !== true) {
-            toggleOffCanvas();
+        // Left swipe on left-aligned menu
+        if (touchStartX - 200 > touchRight && 
+            offCanvasShowing && 
+            !isRightAligned && 
+            !tapping) {
+            toggleOffCanvas('hide');
+        } 
+        // Right swipe on right-aligned menu
+        else if (touchStartX + 200 < touchRight && 
+            offCanvasShowing && 
+            isRightAligned && 
+            !tapping) {
+            toggleOffCanvas('hide');
         }
     });
 
-    // If user clicks (or taps), close the off canvas nav
-    $('.toggle-off-canvas, .l-off-canvas-overlay').on('click', function() {
-        toggleOffCanvas();
+    // Set up toggle button click handler
+    toggleBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            toggleOffCanvas();
+        });
     });
 
-    $(window).on('load', function() {
+    // Initialize on window load
+    window.addEventListener('load', function() {
         setOffCanvasHeight();
         
-        offCanvasElement
-            .addClass('js-l-off-canvas-hide')
-            .append('<span class="js-tabfix" tabindex="0" aria-hidden="true"></span>');
+        if (offCanvasElement) {
+            offCanvasElement.classList.add('js-l-off-canvas-hide');
+            
+            // Add keyboard trap element
+            const tabFix = document.createElement('span');
+            tabFix.classList.add('js-tabfix');
+            tabFix.tabIndex = 0;
+            tabFix.setAttribute('aria-hidden', 'true');
+            offCanvasElement.appendChild(tabFix);
+        }
     });
 
-    // Resizer
-    $(window).on('ocResizeEnd', function() {
+    // Handle window resize events
+    window.addEventListener('ocResizeEnd', function() {
         setOffCanvasHeight();
     });
-}(jQuery));
+})();
 //# sourceMappingURL=off-canvas.js.map

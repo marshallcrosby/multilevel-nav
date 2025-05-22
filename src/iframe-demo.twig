@@ -10,6 +10,7 @@
 			selector_class: 'example-navbar',
 			modifier_class: 'mln--navbar',
 			data_mln_breakpoint: '768',
+			data_view_markup: 'data-view-markup="associated-script: #scriptExample; btn-x: 10px; btn-y: 50px; btn-z: 0"'
 		} %}
 		
 	</header>
@@ -108,23 +109,23 @@
 					</div>
 				</div>
 
-				{# <div class="col col--4">
+				<div class="col col--4">
 					
 					<!-- Basic -->
 					{% include 'partials/layout/_nav-stacked.twig' with {
 						selector_class: 'example-stacked',
 						data_view_markup: 'data-view-markup="btn-y: -25px; associated-script: #scriptExample2"'
 					} %}
-				</div> #}
+				</div>
 				
-				{# <div class="col col--4">
+				<div class="col col--4">
 					
 					<!-- Basic -->
 					{% include 'partials/layout/_nav-stacked.twig' with {
 						selector_class: 'example-stacked',
 						data_view_markup: 'data-view-markup="btn-y: -25px; associated-script: #scriptExample2"'
 					} %}
-				</div> #}
+				</div>
 			</div>
 		</div>
 	</main>
@@ -137,10 +138,10 @@
 	
 
 	// Initialize on DOM content loaded - this replaces the jQuery document ready functions
-	document.addEventListener('DOMContentLoaded', function() {
+	document.addEventListener('DOMContentLoaded', () => {
 		
 		// Initialize navbar
-		initMultilevelNav('.example-navbar', {
+		multilevelNav('.example-navbar', {
 			'hoverIntent': true,
 			'hoverIntentTimeout': 300,
 			'navbarMenuBackdrop': true,
@@ -149,9 +150,9 @@
 		});
 		
 		// Initialize stacked nav
-		//initMultilevelNav('.example-stacked', {
-			//'expandActiveItem': true
-		//});
+		multilevelNav('.example-stacked', {
+			'expandActiveItem': true
+		});
 	});
 </script>
 

@@ -1,226 +1,352 @@
 /*!
-  * Multilevel nav slide over functionality v1
+  * Multilevel nav slide over extension v2.0.0.0 Beta
   */
-  
-(function ($) {
-    'use strict';
 
-    // Slide over keyboard trap
-    var slideOverKeyboardTrap = function(el) {
-
-        // Tabbable elements
-        var lastIsMln = el.find('.mln__child__list')
-            .first()
-            .find(' > .mln__has-child:last-child > .mln__child-controls')
-            .first()
-            .find('> .mln__toggle-btn, > .mln__toggle-link');
+/* eslint-env es6 */
+const slideOverKeyboardTrap = (el) => {
+    
+    // Tabbable elements
+    const firstChildList = el.querySelector('.mln__child__list');
+    let lastIsMln;
+    
+    if (firstChildList) {
+        const lastChild = firstChildList.querySelector(':scope > .mln__has-child:last-child > .mln__child-controls');
         
-        var tabbable = el.find(
-            'a[href],' +
-            'area[href],' +
-            'input:not([disabled]),' +
-            'select:not([disabled]),' +
-            'textarea:not([disabled]),' +
-            'button:not([disabled]),' +
-            'iframe,' +
-            'object,' +
-            'embed,' +
-            '[tabindex="0"],' +
-            '[contenteditable]'
-        );
+        if (lastChild) {
+            lastIsMln = lastChild.querySelector(':scope > .mln__toggle-btn, :scope > .mln__toggle-link');
+        }
+    }
 
-        var firstTabbable = tabbable.first();
-        var lastTabbable = (lastIsMln.length) ? lastIsMln  : tabbable.last();
-        
-        // Set focus on first input
+    const tabbableElementsArray = [
+        'a[href]',
+        'area[href]',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        'button:not([disabled])',
+        'iframe',
+        'object',
+        'embed',
+        '[tabindex="0"]',
+        '[contenteditable]'
+    ];
+    
+    // Find all tabbable elements
+    const tabbable = el.querySelectorAll(tabbableElementsArray);
+
+    console.log(tabbable);
+
+    const firstTabbable = tabbable[0];
+    const lastTabbable = lastIsMln || tabbable[tabbable.length - 1];
+    
+    // Set focus on first input
+    if (firstTabbable) {
         firstTabbable.focus();
+    }
 
-        // Redirect last tab to first input
-        lastTabbable.on('keydown', function(e) {
-            if (e.which === 9 && !e.shiftKey && $('body').hasClass('js-off-canvas-showing')) {
+    // Redirect last tab to first input
+    if (lastTabbable) {
+        lastTabbable.addEventListener('keydown', (e) => {
+            if (e.which === 9 && !e.shiftKey && document.body.classList.contains('js-off-canvas-showing')) {
                 e.preventDefault();
                 firstTabbable.focus();
             }
         });
+    }
 
-        // Redirect first shift+tab to last input
-        firstTabbable.on('keydown', function(e) {
-            if (e.which === 9 && e.shiftKey && $('body').hasClass('js-off-canvas-showing')) {
+    // Redirect first shift+tab to last input
+    if (firstTabbable) {
+        firstTabbable.addEventListener('keydown', (e) => {
+            if (e.which === 9 && e.shiftKey && document.body.classList.contains('js-off-canvas-showing')) {
                 e.preventDefault();
                 lastTabbable.focus();
             }
         });
+    }
+}
+
+const multilevelSlideOverSetup = (elements, options = {}) => {
+    
+    // Handle string selectors
+    if (typeof elements === 'string') {
+        elements = document.querySelectorAll(elements);
+    }
+    
+    // Handle single element
+    if (elements instanceof HTMLElement) {
+        elements = [elements];
+    }
+    
+    // Convert NodeList to array if needed
+    if (elements instanceof NodeList) {
+        elements = Array.from(elements);
+    }
+
+    // Default settings
+    const defaults = {
+        slideTitles: true,
+        slideTitleLink: false,
+        backButtonSymbol: '&lsaquo;',
+        dynamicBackButtonTitle: false,
+        offCanvasCloseAllMenus: false
     };
-          
-    $.fn.multilevelSlideOver = function (options) {
-        $(this).each(function () {
-            var $slideOverNav = $(this);
-            var settings;
-            var mlnDataBreakpoint = $slideOverNav.attr('data-mln-breakpoint');
+    
+    // Merge defaults with options
+    const settings = {...defaults, ...options};
+    
+    // Process each element
+    for (const slideOverNav of elements) {
+        const mlnDataBreakpoint = slideOverNav.getAttribute('data-mln-breakpoint') || undefined;
+
+        // Function to close all child menus
+        const closeAllChildren = () => {
+            if (slideOverNav.classList.contains('mln--navbar-slide-over')) {
+                
+                // Hide all expanded elements
+                const hiddenElements = slideOverNav.querySelectorAll('[aria-hidden="false"]');
+                for (const el of hiddenElements) {
+                    el.setAttribute('aria-hidden', 'true');
+                    el.classList.remove('mln--height-auto', 'mln__child--overflow-visible');
+                }
+                
+                // Remove visible menu class
+                const visibleMenus = slideOverNav.querySelectorAll('.mln__visible-menu');
+                for (const menu of visibleMenus) {
+                    menu.classList.remove('mln__visible-menu');
+                }
+                
+                // Add visible menu class to main list
+                const mainList = slideOverNav.querySelector('.mln__list');
+                if (mainList) {
+                    mainList.classList.add('mln__visible-menu');
+                }
+                
+                // Collapse expanded elements
+                const expandedElements = slideOverNav.querySelectorAll('[aria-expanded="true"]');
+                for (const el of expandedElements) {
+                    el.setAttribute('aria-expanded', 'false');
+                    const hasChild = el.closest('.mln__has-child--showing');
+
+                    if (hasChild) {
+                        hasChild.classList.remove('mln__has-child--showing');
+                    }
+                }
+                
+                // Reset min-height
+                slideOverNav.style.minHeight = '';
+            }
+        }
+        
+        // Set height on certain elements to make the outer nav height the same
+        // height as the current viewable slide
+        const setDynamicHeight = () => {
             
-            // Setting defaults
-            settings = $.extend({
-                'slideTitles': true,
-                'slideTitleLink': false,
-                'backButtonSymbol': '&lsaquo;',
-                'dynamicBackButtonTitle': false,
-                'offCanvasCloseAllMenus': false
-            }, options);
-                        
-            function closeAllChildren() {
-                if ($slideOverNav.is('.mln--navbar-slide-over')) {
-                    $slideOverNav
-                        .find('[aria-hidden="false"]')
-                        .attr('aria-hidden', true)
-                        .removeClass('mln--height-auto mln__child--overflow-visible')
-                        .end()
-                        .find('.mln__visible-menu')
-                        .removeClass('mln__visible-menu')
-                        .end()
-                        .find('.mln__list')
-                        .addClass('mln__visible-menu')   
-                        .end()
-                        .find('[aria-expanded="true"]')
-                        .attr('aria-expanded', false)
-                        .closest('.mln__has-child--showing')
-                        .removeClass('mln__has-child--showing')
-                        .closest('.mln--navbar-slide-over')
-                        .css({
-                            'min-height': ''
-                        });      
+            // Reset inline styles
+            slideOverNav.querySelectorAll('.mln__child__collapse').forEach(el => {
+                el.style.minHeight = '';
+            });
+
+            // Get the last showing has-child element
+            const allShowing = slideOverNav.querySelectorAll('.mln__has-child.mln__has-child--showing');
+            const lastShowing = allShowing[allShowing.length - 1];
+
+            let parentCollapse = null;
+            let latestChildShowing = null;
+
+            if (lastShowing) {
+                parentCollapse = lastShowing.closest('.mln__child__collapse');
+
+                const directCollapse = lastShowing.querySelector(':scope > .mln__child__collapse');
+                if (directCollapse) {
+                    latestChildShowing = directCollapse.querySelector(':scope > .mln__child__collapse__helper');
                 }
             }
+
+            // Determine element to get height from
+            const getHeightFromThis = latestChildShowing || slideOverNav.querySelector('.mln__list');
+
+            // Get height
+            const dynamicHeight = getHeightFromThis ? getHeightFromThis.offsetHeight : 0;
+
+            // Apply height to nav
+            slideOverNav.style.minHeight = dynamicHeight + 'px';
+
+            // Apply height to parent collapse if available
+            if (parentCollapse) {
+                parentCollapse.style.minHeight = dynamicHeight + 'px';
+            }
+        }
+
+        
+        // Add slide-over controls to each child menu
+        const hasChildElements = slideOverNav.querySelectorAll('.mln__has-child');
+        
+        for (const navEl of hasChildElements) {
+            const childCollapse = navEl.querySelector('.mln__child__collapse');
             
-            // Set height on certain elements to make the outer nav height the same
-            // height as the current viewable slide
-            function setDynamicHeight() {
-
-                // Reset inline css
-                $slideOverNav.find('.mln__child__collapse').css('min-height', '');
-
-                if (parentCollapse) {
-                    parentCollapse.css('min-height', '');
-                }
-
-                // Cache correct elements and get their proper height
-                var latestChildShowing = $slideOverNav.find('.mln__has-child.mln__has-child--showing')
-                    .last()
-                    .find(' > .mln__child__collapse')
-                    .first()
-                    .find('> .mln__child__collapse__helper');
-                
-                var parentCollapse = $slideOverNav.find('.mln__has-child.mln__has-child--showing')
-                    .last()
-                    .closest('.mln__child__collapse');
-                
-                var getHeightFromThis = (latestChildShowing.length) ? latestChildShowing : $slideOverNav.find('.mln__list');
-                
-                // Correct height wether it's a child or the top level list
-                var dynamicHeight = getHeightFromThis.outerHeight();
-                
-                // Set nav elements height to the same as the current viewable slide
-                $slideOverNav.css('min-height', dynamicHeight);
-
-                // Set the height of the current slides parent collapse
-                // to prevent clunky inner scrollbars
-                parentCollapse.css('min-height', dynamicHeight);
+            if (!childCollapse) continue;
+            
+            const currentMenuId = childCollapse.getAttribute('id');
+            const collapseHelper = childCollapse.querySelector('.mln__child__collapse__helper');
+            const menuSectionLink = navEl.querySelector('.mln__child-controls > a');
+            
+            if (!collapseHelper || !menuSectionLink) continue;
+            
+            const menuSectionLabel = menuSectionLink.innerHTML;
+            const backButtonSymbol = settings.backButtonSymbol ? 
+                `<span aria-hidden="true">${settings.backButtonSymbol}</span> ` : '';
+            
+            const isNotLinkable = menuSectionLink.getAttribute('data-mln-not-linkable');
+            const useMenuText = isNotLinkable || settings.dynamicBackButtonTitle;
+            const backButtonText = useMenuText ? 
+                `${backButtonSymbol}${menuSectionLink.textContent}` : 
+                `${backButtonSymbol}Back`;
+            
+            // Create controls container
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'mln__slide-over-controls';
+            collapseHelper.insertBefore(controlsDiv, collapseHelper.firstChild);
+            
+            // Create back button
+            const backBtn = document.createElement('button');
+            backBtn.className = 'mln__back-btn';
+            backBtn.setAttribute('type', 'button');
+            backBtn.setAttribute('aria-controls', currentMenuId);
+            backBtn.innerHTML = backButtonText;
+            controlsDiv.appendChild(backBtn);
+            
+            // Build slide title (no link)
+            if (settings.slideTitles && !settings.slideTitleLink) {
+                const titleSpan = document.createElement('span');
+                titleSpan.className = 'mln__slide-over-title';
+                titleSpan.innerHTML = menuSectionLabel;
+                controlsDiv.appendChild(titleSpan);
             }
             
-            // Help mln act like overlay nav for mobile devices
-            $slideOverNav.find('.mln__has-child').each(function() {
-                var $navEl = $(this);
-                var currentMenuId = $navEl.find('.mln__child__collapse').first().attr('id');
-                var nextCollapseHelper = $navEl.find('.mln__child__collapse__helper').first();
-                var menuSectionLink = $navEl.find(' > .mln__child-controls > a');
-                var menuSectionLabel = menuSectionLink.html();
-                var backButtonSymbol = (settings.backButtonSymbol) ? '<span aria-hidden="true">' + settings.backButtonSymbol + '</span> ' : '';
-                var backButtonText = (menuSectionLink.attr('data-mln-not-linkable') || settings.dynamicBackButtonTitle) ? backButtonSymbol + menuSectionLink.text() : backButtonSymbol + 'Back';
-
-                $('<div>')
-                    .addClass('mln__slide-over-controls')
-                    .prependTo(nextCollapseHelper);
-                    
-                $('<button>')
-                    .addClass('mln__back-btn')
-                    .attr('type', 'button')
-                    .attr('aria-controls', currentMenuId)
-                    .html(backButtonText)
-                    .prependTo($navEl.find('.mln__slide-over-controls'));
-                    
-                // Build slide title no link
-                if (settings.slideTitles && !settings.slideTitleLink) {
-                    $('<span>')
-                        .addClass('mln__slide-over-title')
-                        .html(menuSectionLabel)
-                        .appendTo($navEl.find('.mln__slide-over-controls'));
+            // Build slide title with link
+            if (settings.slideTitles && settings.slideTitleLink) {
+                const titleLink = menuSectionLink.cloneNode(true);
+                titleLink.classList.add('mln__slide-over-title');
+                titleLink.classList.remove('mln__toggle-link');
+                titleLink.removeAttribute('role');
+                titleLink.removeAttribute('aria-expanded');
+                titleLink.removeAttribute('aria-controls');
+                
+                // Remove toggle indicator if exists
+                const toggleIndicator = titleLink.querySelector('.mln__toggle-indicator');
+                if (toggleIndicator) {
+                    toggleIndicator.remove();
                 }
                 
-                // Build slide title with link
-                if (settings.slideTitles && settings.slideTitleLink) {
-                    menuSectionLink
-                        .clone()
-                        .addClass('mln__slide-over-title')
-                        .removeClass('mln__toggle-link')
-                        .removeAttr('role aria-expanded aria-controls')
-                        .find('.mln__toggle-indicator')
-                        .remove()
-                        .end()
-                        .appendTo($navEl.find('.mln__slide-over-controls'));
-                }
-
-                $navEl
-                    .find('.mln__back-btn')
-                    .first()
-                    .on('click', function(){
-                        $navEl
-                            .find('.mln__toggle-btn[aria-controls="' + currentMenuId + '"], .mln__toggle-link[aria-controls="' + currentMenuId + '"]')
-                            .trigger('click');
+                controlsDiv.appendChild(titleLink);
+            }
+            
+            // Add back button click handler
+            backBtn.addEventListener('click', () => {
+                const toggleElement = navEl.querySelector(`.mln__toggle-btn[aria-controls="${currentMenuId}"], .mln__toggle-link[aria-controls="${currentMenuId}"]`);
+                
+                if (toggleElement) {
+                    
+                    // Create and dispatch click event
+                    const clickEvent = new MouseEvent('click', {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window
                     });
+                    
+                    toggleElement.dispatchEvent(clickEvent);
+                }
             });
-            
-            // Set dynamic height when mln events fire
-            $slideOverNav.on('show.mln.child', function() {
-                if ($slideOverNav.hasClass('mln--navbar-slide-over') && mlnViewport().width < mlnDataBreakpoint || mlnDataBreakpoint === undefined) {
-                    setDynamicHeight($slideOverNav);
-                }
-            }).on('hide.mln.child', function() {
-                if ($slideOverNav.hasClass('mln--navbar-slide-over') && mlnViewport().width < mlnDataBreakpoint || mlnDataBreakpoint === undefined) {
-                    setDynamicHeight($slideOverNav);
-                }
-            }).on('shown.mln.child', function(){
-                var latestNavShowing = $slideOverNav.find('.mln__has-child--showing')
-                    .last()
-                    .addClass('mln__has-child--active')
-                    .find('.mln__child__collapse')
-                    .first();
+        }
+        
+        // Event listeners for navigation events
+        slideOverNav.addEventListener('show.mln.child', () => {
+            if (
+                (slideOverNav.classList.contains('mln--navbar-slide-over') && 
+                mlnViewport().width < mlnDataBreakpoint) || 
+                mlnDataBreakpoint === undefined
+            ) {
+                setDynamicHeight();
+            }
+        });
+        
+        slideOverNav.addEventListener('hide.mln.child', () => {
+            if (
+                (slideOverNav.classList.contains('mln--navbar-slide-over') && 
+                mlnViewport().width < mlnDataBreakpoint) || 
+                mlnDataBreakpoint === undefined
+            ) {
+                setDynamicHeight();
+            }
+        });
+        
+        slideOverNav.addEventListener('shown.mln.child', () => {
+            const showingElements = slideOverNav.querySelectorAll('.mln__has-child--showing');
+            if (showingElements.length) {
+                const latestNavShowing = showingElements[showingElements.length - 1];
+                latestNavShowing.classList.add('mln__has-child--active');
                 
-                slideOverKeyboardTrap(latestNavShowing);
-            });  
-            
-            // Remove dynamic height on navbar after resize
-            $(window).on('mlnResizeEnd', function () {
-                if ($slideOverNav.hasClass('mln--navbar-slide-over') && mlnViewport().width > mlnDataBreakpoint) {
-                    $slideOverNav.css('min-height', '');
-                } else {
-                    setDynamicHeight($slideOverNav);
+                const childCollapse = latestNavShowing.querySelector('.mln__child__collapse');
+                if (childCollapse) {
+                    slideOverKeyboardTrap(childCollapse);
                 }
-            });
-                                    
-            // Close all menus when closing off canvas
-            if (settings.offCanvasCloseAllMenus) {
-                $('.toggle-off-canvas').one('click', function() {
-                    var $toggleButton = $(this);
-                                    
-                    if ($toggleButton.attr('aria-expanded') === 'true') {
-                        $(document).on('hidden.offCanvas', function() {
+            }
+        });
+        
+        // Handle off-canvas close if needed
+        if (settings.offCanvasCloseAllMenus) {
+            const offCanvasToggles = document.querySelectorAll('.toggle-off-canvas');
+            
+            for (const toggleButton of offCanvasToggles) {
+                
+                // Use a one-time listener
+                const clickHandler = () => {
+                    if (toggleButton.getAttribute('aria-expanded') === 'true') {
+                        
+                        // Listen for hidden.offCanvas event
+                        document.addEventListener('hidden.offCanvas', function offCanvasHiddenHandler() {
                             closeAllChildren();
+                            document.removeEventListener('hidden.offCanvas', offCanvasHiddenHandler);
                         });
                     }
-                });    
+                    
+                    toggleButton.removeEventListener('click', clickHandler);
+                };
+                
+                toggleButton.addEventListener('click', clickHandler);
             }
-            
-            setDynamicHeight($(this));
+        }
+        
+        // Initialize dynamic height
+        setDynamicHeight();
+        
+        // Handle resize events
+        window.addEventListener('mlnResizeEnd', () => {
+            if (slideOverNav.classList.contains('mln--navbar-slide-over') && mlnViewport().width > mlnDataBreakpoint) {
+                slideOverNav.style.minHeight = '';
+            } else {
+                setDynamicHeight();
+            }
         });
-    };
-}(jQuery));
+    }
+    
+    // Return the processed elements for chaining
+    return elements;
+}
+
+// Helper function to initialize multilevelNavSlideOver on multiple elements
+const multilevelNavSlideOver = (selector, options) => {
+    const elements = document.querySelectorAll(selector);
+    const instances = [];
+    
+    elements.forEach(element => {
+        const instance = multilevelSlideOverSetup(element, options);
+        
+        if (instance) {
+            instances.push(instance);
+        }
+    });
+    
+    return instances;
+}
 //# sourceMappingURL=multilevel-nav-slide-over.js.map
