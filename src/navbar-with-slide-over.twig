@@ -12,6 +12,9 @@
     
     <!-- Link to mln CSS -->
 	<link rel="stylesheet" type="text/css" href="assets/css/multilevel-nav.css?v1" />
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4Q6Gf2aSP4eDXB8Miphtr37CMZZQ5oXLH2yaXMJ2w8e2ZtHTl7GptT4jmndRuHDT" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.bundle.min.js" integrity="sha384-j1CDi7MgGQ12Z7Qab0qlWQ/Qqz24Gc6BM0thvEMVjHnfYGF0rmFCozFSxQBxwHKO" crossorigin="anonymous"></script>
 </head>
 
 <body class="l-body has-header-fixed off-canvas-right" data-off-canvas-breakpoint="768" data-view-markup="associated-script: #example1; btn-pos: fixed; btn-x: 10px; btn-y: 55px;">
@@ -210,6 +213,21 @@
                                 </li>
                             </ul>
                 		</nav>
+						<p class="d-inline-flex gap-1">
+							<a class="btn btn-primary" data-bs-toggle="collapse" href="#collapseExample" role="button" aria-expanded="false" aria-controls="collapseExample">
+								Link with href
+							</a>
+							<button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+								Button with data-bs-target
+							</button>
+						</p>
+
+						<div class="collapse" id="collapseExample">
+							<div class="card card-body">
+								Some placeholder content for the collapse component. This panel is hidden by default but revealed when the user activates the relevant trigger.
+								<a href="#">Test</a>
+							</div>
+						</div>
 					</div>
 					
 					<!-- Put more stuff here -->
@@ -577,7 +595,7 @@ $('.selector-name').multilevelSlideOver();</code></pre>
 	</div>
     <script src="https://cdn.jsdelivr.net/gh/marshallcrosby/view-markup/dist/js/view-markup.min.js"></script>
 	{# <script src="https://code.jquery.com/jquery-3.3.1.min.js?v1"></script> #}
-    <script src="assets/js/off-canvas.js?v1"></script>
+    <script src="assets/js/off-canvas-temp.js?v1"></script>
 	<script src="assets/js/multilevel-nav.js?v1"></script>
 	<script src="assets/js/multilevel-nav-slide-over.js?v1"></script>
 
@@ -591,11 +609,14 @@ $('.selector-name').multilevelSlideOver();</code></pre>
 				'hoverIntent': true,
 				'hoverIntentTimeout': 300,
 				'wholeLinkToggler': true,
-				'toggleOnClickOnly': true
+				'toggleOnClickOnly': true,
+				childMenuTogglerSymbol: '<i>DOH</i>',
+				excludeLevel: 2
 			});
 			
 			multilevelNavSlideOver('.example-navbar', {
-				'slideTitleLink': true
+				'slideTitleLink': true,
+				offCanvasCloseAllMenus: true
 			});
 		});
 	</script>

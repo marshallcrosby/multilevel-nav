@@ -3,20 +3,13 @@
   */
 
 /* eslint-env es6 */
-const slideOverKeyboardTrap = (el) => {
-    
-    // Tabbable elements
-    const firstChildList = el.querySelector('.mln__child__list');
-    let lastIsMln;
-    
-    if (firstChildList) {
-        const lastChild = firstChildList.querySelector(':scope > .mln__has-child:last-child > .mln__child-controls');
-        
-        if (lastChild) {
-            lastIsMln = lastChild.querySelector(':scope > .mln__toggle-btn, :scope > .mln__toggle-link');
-        }
-    }
 
+const isVisible = (el) => {
+    const style = window.getComputedStyle(el);
+    return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetParent !== null;
+}
+
+const getTabbableElements = (container) => {
     const tabbableElementsArray = [
         'a[href]',
         'area[href]',
@@ -30,38 +23,55 @@ const slideOverKeyboardTrap = (el) => {
         '[tabindex="0"]',
         '[contenteditable]'
     ];
-    
-    // Find all tabbable elements
-    const tabbable = el.querySelectorAll(tabbableElementsArray);
 
-    console.log(tabbable);
+    return Array.from(container.querySelectorAll(tabbableElementsArray)).filter(el => isVisible(el) && el.tabIndex >= 0);
+}
 
-    const firstTabbable = tabbable[0];
-    const lastTabbable = lastIsMln || tabbable[tabbable.length - 1];
-    
-    // Set focus on first input
-    if (firstTabbable) {
-        firstTabbable.focus();
-    }
+let keydownHandler = null;
 
-    // Redirect last tab to first input
-    if (lastTabbable) {
-        lastTabbable.addEventListener('keydown', (e) => {
-            if (e.which === 9 && !e.shiftKey && document.body.classList.contains('js-off-canvas-showing')) {
+const slideOverKeyboardTrap = (el) => {
+
+    const container = el.closest('.l-off-canvas') || el;
+    // const container = el;
+
+    // Save currently focused element to return to it later
+    focusBeforeOffCanvas = document.activeElement;
+
+    keydownHandler = (e) => {
+        if (e.key === 'Tab') {
+            const tabbable = getTabbableElements(container);
+            const first = tabbable[0];
+            const last = tabbable[tabbable.length - 1];
+
+            if (tabbable.length === 0) {
                 e.preventDefault();
-                firstTabbable.focus();
+                return;
             }
-        });
-    }
 
-    // Redirect first shift+tab to last input
-    if (firstTabbable) {
-        firstTabbable.addEventListener('keydown', (e) => {
-            if (e.which === 9 && e.shiftKey && document.body.classList.contains('js-off-canvas-showing')) {
+            if (e.shiftKey && document.activeElement === first) {
                 e.preventDefault();
-                lastTabbable.focus();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
             }
-        });
+        }
+    };
+
+    container.addEventListener('keydown', keydownHandler);
+
+    const initialTabbable = getTabbableElements(container)[0];
+    
+    if (!document.querySelector('.mln__list .active') && initialTabbable) {
+        initialTabbable.focus();
+    }
+}
+
+const removeTrapKeyboardHandlers = (el) => {
+    if (keydownHandler) {
+        el.removeEventListener('keydown', keydownHandler);
+        keydownHandler = null;
+        // focusBeforeOffCanvas.focus();
     }
 }
 
@@ -95,45 +105,45 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
     const settings = {...defaults, ...options};
     
     // Process each element
-    for (const slideOverNav of elements) {
-        const mlnDataBreakpoint = slideOverNav.getAttribute('data-mln-breakpoint') || undefined;
+    elements.forEach(element => {
+        const mlnDataBreakpoint = (element.getAttribute('data-mln-breakpoint')) ? parseInt(element.getAttribute('data-mln-breakpoint')) : undefined;
 
         // Function to close all child menus
         const closeAllChildren = () => {
-            if (slideOverNav.classList.contains('mln--navbar-slide-over')) {
+            if (element.classList.contains('mln--navbar-slide-over')) {
                 
                 // Hide all expanded elements
-                const hiddenElements = slideOverNav.querySelectorAll('[aria-hidden="false"]');
-                for (const el of hiddenElements) {
+                const hiddenElements = element.querySelectorAll('[aria-hidden="false"]');
+                hiddenElements.forEach(el => {
                     el.setAttribute('aria-hidden', 'true');
                     el.classList.remove('mln--height-auto', 'mln__child--overflow-visible');
-                }
+                });
                 
                 // Remove visible menu class
-                const visibleMenus = slideOverNav.querySelectorAll('.mln__visible-menu');
-                for (const menu of visibleMenus) {
+                const visibleMenus = element.querySelectorAll('.mln__visible-menu');
+                visibleMenus.forEach(menu => {
                     menu.classList.remove('mln__visible-menu');
-                }
+                });
                 
                 // Add visible menu class to main list
-                const mainList = slideOverNav.querySelector('.mln__list');
+                const mainList = element.querySelector('.mln__list');
                 if (mainList) {
                     mainList.classList.add('mln__visible-menu');
                 }
                 
                 // Collapse expanded elements
-                const expandedElements = slideOverNav.querySelectorAll('[aria-expanded="true"]');
-                for (const el of expandedElements) {
+                const expandedElements = element.querySelectorAll('[aria-expanded="true"]');
+                expandedElements.forEach(el => {
                     el.setAttribute('aria-expanded', 'false');
                     const hasChild = el.closest('.mln__has-child--showing');
 
                     if (hasChild) {
                         hasChild.classList.remove('mln__has-child--showing');
                     }
-                }
+                });
                 
                 // Reset min-height
-                slideOverNav.style.minHeight = '';
+                element.style.minHeight = '';
             }
         }
         
@@ -142,12 +152,12 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
         const setDynamicHeight = () => {
             
             // Reset inline styles
-            slideOverNav.querySelectorAll('.mln__child__collapse').forEach(el => {
+            element.querySelectorAll('.mln__child__collapse').forEach(el => {
                 el.style.minHeight = '';
             });
 
             // Get the last showing has-child element
-            const allShowing = slideOverNav.querySelectorAll('.mln__has-child.mln__has-child--showing');
+            const allShowing = element.querySelectorAll('.mln__has-child.mln__has-child--showing');
             const lastShowing = allShowing[allShowing.length - 1];
 
             let parentCollapse = null;
@@ -163,13 +173,13 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
             }
 
             // Determine element to get height from
-            const getHeightFromThis = latestChildShowing || slideOverNav.querySelector('.mln__list');
+            const getHeightFromThis = latestChildShowing || element.querySelector('.mln__list');
 
             // Get height
             const dynamicHeight = getHeightFromThis ? getHeightFromThis.offsetHeight : 0;
 
             // Apply height to nav
-            slideOverNav.style.minHeight = dynamicHeight + 'px';
+            element.style.minHeight = dynamicHeight + 'px';
 
             // Apply height to parent collapse if available
             if (parentCollapse) {
@@ -179,18 +189,18 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
 
         
         // Add slide-over controls to each child menu
-        const hasChildElements = slideOverNav.querySelectorAll('.mln__has-child');
+        const hasChildElements = element.querySelectorAll('.mln__has-child');
         
-        for (const navEl of hasChildElements) {
+        hasChildElements.forEach(navEl => {
             const childCollapse = navEl.querySelector('.mln__child__collapse');
             
-            if (!childCollapse) continue;
+            if (!childCollapse) return;
             
             const currentMenuId = childCollapse.getAttribute('id');
             const collapseHelper = childCollapse.querySelector('.mln__child__collapse__helper');
             const menuSectionLink = navEl.querySelector('.mln__child-controls > a');
             
-            if (!collapseHelper || !menuSectionLink) continue;
+            if (!collapseHelper || !menuSectionLink) return;
             
             const menuSectionLabel = menuSectionLink.innerHTML;
             const backButtonSymbol = settings.backButtonSymbol ? 
@@ -253,42 +263,51 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
                         cancelable: true,
                         view: window
                     });
-                    
+
                     toggleElement.dispatchEvent(clickEvent);
                 }
             });
-        }
+        });
         
         // Event listeners for navigation events
-        slideOverNav.addEventListener('show.mln.child', () => {
+        element.addEventListener('show.mln.child', () => {
             if (
-                (slideOverNav.classList.contains('mln--navbar-slide-over') && 
-                mlnViewport().width < mlnDataBreakpoint) || 
+                (element.classList.contains('mln--navbar-slide-over') && 
+                window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) || 
                 mlnDataBreakpoint === undefined
             ) {
                 setDynamicHeight();
             }
         });
         
-        slideOverNav.addEventListener('hide.mln.child', () => {
+        element.addEventListener('hide.mln.child', () => {
             if (
-                (slideOverNav.classList.contains('mln--navbar-slide-over') && 
-                mlnViewport().width < mlnDataBreakpoint) || 
+                (element.classList.contains('mln--navbar-slide-over') && 
+                window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) || 
                 mlnDataBreakpoint === undefined
             ) {
                 setDynamicHeight();
             }
         });
         
-        slideOverNav.addEventListener('shown.mln.child', () => {
-            const showingElements = slideOverNav.querySelectorAll('.mln__has-child--showing');
+        element.addEventListener('shown.mln.child', () => {
+            const showingElements = element.querySelectorAll('.mln__has-child--showing');
+            
             if (showingElements.length) {
                 const latestNavShowing = showingElements[showingElements.length - 1];
                 latestNavShowing.classList.add('mln__has-child--active');
                 
                 const childCollapse = latestNavShowing.querySelector('.mln__child__collapse');
+                
                 if (childCollapse) {
-                    slideOverKeyboardTrap(childCollapse);
+                    removeTrapKeyboardHandlers(childCollapse);
+                    
+                    if (
+                        element.classList.contains('mln--navbar-slide-over') &&
+                        window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches
+                    ) {
+                        slideOverKeyboardTrap(childCollapse);
+                    }
                 }
             }
         });
@@ -297,7 +316,7 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
         if (settings.offCanvasCloseAllMenus) {
             const offCanvasToggles = document.querySelectorAll('.toggle-off-canvas');
             
-            for (const toggleButton of offCanvasToggles) {
+            offCanvasToggles.forEach(toggleButton => {
                 
                 // Use a one-time listener
                 const clickHandler = () => {
@@ -309,12 +328,10 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
                             document.removeEventListener('hidden.offCanvas', offCanvasHiddenHandler);
                         });
                     }
-                    
-                    toggleButton.removeEventListener('click', clickHandler);
                 };
                 
                 toggleButton.addEventListener('click', clickHandler);
-            }
+            });
         }
         
         // Initialize dynamic height
@@ -322,13 +339,19 @@ const multilevelSlideOverSetup = (elements, options = {}) => {
         
         // Handle resize events
         window.addEventListener('mlnResizeEnd', () => {
-            if (slideOverNav.classList.contains('mln--navbar-slide-over') && mlnViewport().width > mlnDataBreakpoint) {
-                slideOverNav.style.minHeight = '';
+            if (element.classList.contains('mln--navbar-slide-over') && window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches) {
+                const childCollapse = element.closest('.l-off-canvas') || element.querySelector('.mln__child__collapse');
+
+                if (childCollapse) {
+                    removeTrapKeyboardHandlers(childCollapse);
+                }
+
+                element.style.minHeight = '';
             } else {
                 setDynamicHeight();
             }
         });
-    }
+    });
     
     // Return the processed elements for chaining
     return elements;
@@ -348,5 +371,14 @@ const multilevelNavSlideOver = (selector, options) => {
     });
     
     return instances;
+}
+
+// Jquery initialization method using $ or jQuery
+if (typeof jQuery !== 'undefined') {
+    jQuery.fn.multilevelNavSlideOver = function(options) {
+        return this.each(function() {
+            multilevelSlideOverSetup(this, options);
+        });
+    };
 }
 //# sourceMappingURL=multilevel-nav-slide-over.js.map

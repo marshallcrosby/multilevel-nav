@@ -2,6 +2,13 @@
   * Multilevel nav v4.0.0 Beta
   */
 
+/*
+    TODO:
+    - Fix focus out of last item in navbar
+    - Arrow keys for child menus
+    - Fix slide over keyboard trapping if not in a navbar
+*/
+
 /* eslint-env es6 */
 let mlnCurrent = 1;
 
@@ -22,7 +29,7 @@ const mlnViewport = () => {
 }
 
 // Custom event creator helper
-const createCustomEvent = (name, detail = null) => {
+const mlnCreateCustomEvent = (name, detail = null) => {
     return new CustomEvent(name, {
         bubbles: true,
         cancelable: true,
@@ -31,7 +38,7 @@ const createCustomEvent = (name, detail = null) => {
 }
 
 // HoverIntent reimplementation (replacing jQuery plugin)
-const hoverIntent = (element, options) => {
+const mlnHoverIntent = (element, options) => {
     const settings = Object.assign({
         sensitivity: 7,
         interval: 100,
@@ -50,6 +57,7 @@ const hoverIntent = (element, options) => {
     }
     
     const compare = (e) =>{
+        
         // Compare mouse positions to see if mouse has slowed enough
         if (Math.abs(pX - x) + Math.abs(pY - y) < settings.sensitivity) {
             element.removeEventListener('mousemove', track);
@@ -126,7 +134,7 @@ const hoverIntent = (element, options) => {
             }
             
             resizeTO = setTimeout(() => {
-                window.dispatchEvent(createCustomEvent('mlnResizeEnd'));
+                window.dispatchEvent(mlnCreateCustomEvent('mlnResizeEnd'));
             }, 150);
         }
         
@@ -164,12 +172,12 @@ const multilevelNavSetup = (element, options = {}) => {
     // Element selectors
     const mlnParentList = element.querySelector('.mln__list');
     const mlnExpander = element.querySelector('.mln__expander');
-    const mlnDataBreakpoint = parseInt(element.getAttribute('data-mln-breakpoint') || 992);
+    const mlnDataBreakpoint = (element.getAttribute('data-mln-breakpoint')) ? parseInt(element.getAttribute('data-mln-breakpoint')) : undefined;
     const mlnToggleBtnVerbiage = 'Toggle items under';
     const mlnTransitionEnd = 'transitionend';
     const body = document.body;
     let mlnIsPageLoaded = false;
-    
+
     // Show/hide menu(s)
     const mlnToggleChild = (el, action, animate) => {
         let mlnHasChild;
@@ -205,7 +213,7 @@ const multilevelNavSetup = (element, options = {}) => {
         }
         
         // Trigger transition event
-        mlnHasChild.dispatchEvent(createCustomEvent('transition.mln.child'));
+        mlnHasChild.dispatchEvent(mlnCreateCustomEvent('transition.mln.child'));
         
         // Correct toggler attributes
         mlnChildToggler.setAttribute('aria-expanded', ariaExpandedValue);
@@ -238,7 +246,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 body.classList.add('js-mln-mega-menu-showing');
             }
             
-            mlnHasChild.dispatchEvent(createCustomEvent('show.mln.child'));
+            mlnHasChild.dispatchEvent(mlnCreateCustomEvent('show.mln.child'));
             
             if (animate === true) {
                 mlnToggleChildCollapse.classList.add('mln__child--transitioning');
@@ -258,8 +266,8 @@ const multilevelNavSetup = (element, options = {}) => {
                         mlnToggleChildCollapse.classList.add('mln__child--overflow-visible');
                     }
                     
-                    mlnHasChild.dispatchEvent(createCustomEvent('shown.mln.child'));
-                    mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
+                    mlnHasChild.dispatchEvent(mlnCreateCustomEvent('shown.mln.child'));
+                    mlnHasChild.dispatchEvent(mlnCreateCustomEvent('transitioned.mln.child'));
                 };
                 
                 mlnToggleChildCollapse.addEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -270,8 +278,8 @@ const multilevelNavSetup = (element, options = {}) => {
                 mlnToggleChildCollapse.style.height = '';
                 mlnToggleChildCollapse.classList.add('mln__child--overflow-visible');
                 
-                mlnHasChild.dispatchEvent(createCustomEvent('shown.mln.child'));
-                mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
+                mlnHasChild.dispatchEvent(mlnCreateCustomEvent('shown.mln.child'));
+                mlnHasChild.dispatchEvent(mlnCreateCustomEvent('transitioned.mln.child'));
             }
         }
         
@@ -293,7 +301,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 body.classList.remove('js-mln-mega-menu-showing');
             }
             
-            mlnHasChild.dispatchEvent(createCustomEvent('hide.mln.child'));
+            mlnHasChild.dispatchEvent(mlnCreateCustomEvent('hide.mln.child'));
             
             if (animate === true) {
                 mlnToggleChildCollapse.style.height = collapseHeight + 'px';
@@ -311,8 +319,8 @@ const multilevelNavSetup = (element, options = {}) => {
                     
                     mlnToggleChildCollapse.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
                     mlnToggleChildCollapse.classList.remove('mln__child--transitioning');
-                    mlnHasChild.dispatchEvent(createCustomEvent('hidden.mln.child'));
-                    mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
+                    mlnHasChild.dispatchEvent(mlnCreateCustomEvent('hidden.mln.child'));
+                    mlnHasChild.dispatchEvent(mlnCreateCustomEvent('transitioned.mln.child'));
                 };
                 
                 mlnToggleChildCollapse.addEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -330,8 +338,8 @@ const multilevelNavSetup = (element, options = {}) => {
                 mlnToggleChildCollapse.setAttribute('aria-hidden', ariaHiddenValue);
                 mlnToggleChildCollapse.style.height = '';
                 
-                mlnHasChild.dispatchEvent(createCustomEvent('hidden.mln.child'));
-                mlnHasChild.dispatchEvent(createCustomEvent('transitioned.mln.child'));
+                mlnHasChild.dispatchEvent(mlnCreateCustomEvent('hidden.mln.child'));
+                mlnHasChild.dispatchEvent(mlnCreateCustomEvent('transitioned.mln.child'));
             }
         }
     }
@@ -347,7 +355,7 @@ const multilevelNavSetup = (element, options = {}) => {
             const expandBtn = element.querySelector('.mln__expand-btn');
             
             if (!mlnExpander.classList.contains('mln__expander--showing')) {
-                mlnExpander.dispatchEvent(createCustomEvent('showing.mln.expander'));
+                mlnExpander.dispatchEvent(mlnCreateCustomEvent('showing.mln.expander'));
                 
                 mlnExpander.classList.add('mln__expander--transitioning');
                 mlnExpander.style.height = collapseHeight + 'px';
@@ -366,7 +374,7 @@ const multilevelNavSetup = (element, options = {}) => {
                     mlnExpander.classList.add('mln__expander--showing');
                     mlnExpander.classList.remove('mln__expander--transitioning');
                     
-                    mlnExpander.dispatchEvent(createCustomEvent('shown.mln.expander'));
+                    mlnExpander.dispatchEvent(mlnCreateCustomEvent('shown.mln.expander'));
                 };
                 
                 mlnExpander.addEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -376,7 +384,7 @@ const multilevelNavSetup = (element, options = {}) => {
                     child.addEventListener(mlnTransitionEnd, e => e.stopPropagation());
                 });
             } else {
-                mlnExpander.dispatchEvent(createCustomEvent('hiding.mln.expander'));
+                mlnExpander.dispatchEvent(mlnCreateCustomEvent('hiding.mln.expander'));
                 
                 mlnExpander.classList.add('mln__expander--transitioning');
                 mlnExpander.style.height = collapseHeight + 'px';
@@ -397,7 +405,7 @@ const multilevelNavSetup = (element, options = {}) => {
                     mlnExpander.removeEventListener(mlnTransitionEnd, handleTransitionEnd);
                     mlnExpander.classList.remove('mln__expander--transitioning');
                     
-                    mlnExpander.dispatchEvent(createCustomEvent('hidden.mln.expander'));
+                    mlnExpander.dispatchEvent(mlnCreateCustomEvent('hidden.mln.expander'));
                 };
                 
                 mlnExpander.addEventListener(mlnTransitionEnd, handleTransitionEnd);
@@ -413,8 +421,7 @@ const multilevelNavSetup = (element, options = {}) => {
         if (animate === false && element.closest('.mln--navbar')) {
             const expandBtn = element.querySelector('.mln__expand-btn');
             
-            // if (window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) {
-            if (mlnViewport().width < mlnDataBreakpoint) {
+            if (window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) {
                 mlnExpander.classList.remove('mln__expander--showing');
                 mlnExpander.setAttribute('aria-hidden', 'true');
                 
@@ -433,7 +440,7 @@ const multilevelNavSetup = (element, options = {}) => {
         if (animate === false && element.classList.contains('mln--expand-above-breakpoint')) {
             const expandBtn = element.querySelector('.mln__expand-btn');
             
-            if (mlnViewport().width < mlnDataBreakpoint) {
+            if (window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches) {
                 mlnExpander.classList.remove('mln__expander--showing');
                 mlnExpander.setAttribute('aria-hidden', 'true');
                 
@@ -463,7 +470,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 const elemRect = hasChild.getBoundingClientRect();
                 const mlnToggleChildOffset = (elemRect.left - bodyRect.left) + (hasChild.offsetWidth * 2);
                 
-                if (mlnToggleChildOffset > mlnViewport().width && mlnViewport().width >= mlnDataBreakpoint) {
+                if (mlnToggleChildOffset > mlnViewport().width && window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches) {
                     hasChild.classList.add('mln__child--flow-right');
                 } else {
                     hasChild.classList.remove('mln__child--flow-right');
@@ -496,7 +503,7 @@ const multilevelNavSetup = (element, options = {}) => {
             if (
                 !mlnIsPageLoaded || 
                 (mlnParentList.closest('.mln--navbar') &&
-                mlnViewport().width < mlnDataBreakpoint &&
+                window.matchMedia(`(max-width: ${mlnDataBreakpoint - 1}px)`).matches &&
                 !mlnIsPageLoaded)
             ) {
                 mlnToggleChild(item, 'show', false);
@@ -504,7 +511,7 @@ const multilevelNavSetup = (element, options = {}) => {
             
             if (
                 mlnParentList.closest('.mln--navbar') &&
-                mlnViewport().width >= mlnDataBreakpoint
+                window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches
             ) {
                 mlnToggleChild(item, 'hide', false);
             }
@@ -564,6 +571,7 @@ const multilevelNavSetup = (element, options = {}) => {
     // Add depth class to nested list items
     const nestedLi = mlnParentList.querySelectorAll('li:not(.mln__child__mega-menu li)');
     nestedLi.forEach(li => {
+        
         // Count parent li elements to determine level
         let level = 1;
         let parent = li.parentElement;
@@ -619,6 +627,7 @@ const multilevelNavSetup = (element, options = {}) => {
         const existingCollapse = parentList.parentNode.querySelector('.mln__child__collapse');
         
         if (existingCollapse) {
+            
             // If there's already a collapse element, move the list to its helper
             const parentCollapse = parentList.parentNode.querySelector('.mln__child__collapse__helper');
             
@@ -747,7 +756,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 if (
                     isPageAnchor &&
                     !e.target.closest('.mln__toggle-link') &&
-                    mlnViewport().width >= mlnDataBreakpoint
+                    window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches
                 ) {
                     const showingMenus = element.querySelectorAll('.mln__has-child--showing');
                     showingMenus.forEach(menu => {
@@ -791,6 +800,7 @@ const multilevelNavSetup = (element, options = {}) => {
         }
         
         if (settings.topLevelWholeLinkToggler) {
+            
             // Select only the direct children of mlnParentList that are .mln__has-child
             const topLevelItems = Array.from(mlnParentList.children)
                 .filter(child => child.classList.contains('mln__has-child'));
@@ -866,7 +876,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 !element.querySelector('.mln__has-child--showing.mln__child--transitioning')
             ) {
                 if (
-                    mlnViewport().width >= mlnDataBreakpoint &&
+                    window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                     settings.autoCloseNavbarMenus === true &&
                     !button.closest('.mln--expand-above-breakpoint') &&
                     button.closest('.mln--navbar')
@@ -905,7 +915,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 }
                 
                 if (
-                    mlnViewport().width >= mlnDataBreakpoint &&
+                    window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                     hasChild.closest('.mln--navbar')
                 ) {
                     mlnToggleChild(hasChild, 'show', true);
@@ -918,7 +928,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 }
                 
                 if (
-                    mlnViewport().width >= mlnDataBreakpoint &&
+                    window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                     associatedMenu && 
                     associatedMenu.getAttribute('aria-hidden') === 'false' &&
                     hasChild.closest('.mln--navbar')
@@ -928,17 +938,19 @@ const multilevelNavSetup = (element, options = {}) => {
             };
             
             if (settings.hoverIntent) {
+                
                 // Use hoverIntent implementation
-                hoverIntent(hasChild, {
+                mlnHoverIntent(hasChild, {
                     over: showMenu,
                     timeout: settings.hoverIntentTimeout,
                     out: hideMenu
                 });
             } else {
+                
                 // Use standard hover events
                 hasChild.addEventListener('mouseenter', () => {
                     if (
-                        mlnViewport().width >= mlnDataBreakpoint &&
+                        window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                         hasChild.closest('.mln--navbar')
                     ) {
                         if (hasChild.classList.contains('mln__has-child--showing')) {
@@ -957,7 +969,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 
                 hasChild.addEventListener('mouseleave', () => {
                     if (
-                        mlnViewport().width >= mlnDataBreakpoint &&
+                        window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                         hasChild.closest('.mln--navbar')
                     ) {
                         if (associatedMenu) {
@@ -983,6 +995,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 const associatedMenu = eTarget.closest('.mln__has-child--showing');
                 
                 if (associatedMenu) {
+                    
                     // Find and focus the toggle button
                     const toggleButton = associatedMenu.querySelector('.mln__toggle-btn, .mln__toggle-link');
                     
@@ -1003,6 +1016,7 @@ const multilevelNavSetup = (element, options = {}) => {
                 eTarget.parentNode.nextElementSibling.classList.contains('mln__child__collapse') &&
                 eTarget.parentNode.nextElementSibling.classList.contains('mln__child--transitioning')
             ) {
+                
                 // Find the next focusable anchor
                 let nextFocusableAnchor = null;
                 const nextItem = eTarget.closest('.mln__has-child').nextElementSibling;
@@ -1038,7 +1052,7 @@ const multilevelNavSetup = (element, options = {}) => {
             
             if (
                 !eTarget.closest('.mln__has-child--showing') &&
-                mlnViewport().width >= mlnDataBreakpoint &&
+                window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                 settings.autoCloseInactiveMenu === true &&
                 eTarget.closest('.mln--navbar')
             ) {
@@ -1053,7 +1067,7 @@ const multilevelNavSetup = (element, options = {}) => {
         if (!settings.keepMenuOpenOnFocusOut) {
             mlnParentList.addEventListener('focusout', (e) => {
                 setTimeout(() => {
-                    if (mlnViewport().width >= mlnDataBreakpoint) {
+                    if (window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches) {
                         const activeElement = document.activeElement;
                         const nonActiveMenus = Array.from(document.querySelectorAll('.mln--navbar')).filter(
                             menu => !menu.contains(activeElement)
@@ -1070,14 +1084,14 @@ const multilevelNavSetup = (element, options = {}) => {
                     isCurrentMenuFocused = 
                         document.activeElement.closest('.mln--navbar') && 
                         document.activeElement.closest('.mln__list') ? true : false;
-                    
+
                     if (
                         !isCurrentMenuFocused &&
-                        mlnViewport().width >= mlnDataBreakpoint &&
+                        window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
                         e.type !== 'keydown' &&
                         settings.autoCloseNavbarMenus === true &&
                         e.target.closest('.mln--navbar') &&
-                        !e.target.closest('.mln__has-child--showing')
+                        !document.activeElement.closest('.mln__has-child--showing')
                     ) {
                         const showingItems = element.querySelectorAll('.mln__has-child--showing');
                         showingItems.forEach(item => {
@@ -1121,7 +1135,7 @@ const multilevelNavSetup = (element, options = {}) => {
     // Handle resize end events
     window.addEventListener('mlnResizeEnd', () => {
         if (
-            mlnViewport().width >= mlnDataBreakpoint &&
+            window.matchMedia(`(min-width: ${mlnDataBreakpoint}px)`).matches &&
             settings.autoCloseNavbarMenus === true &&
             settings.expandActiveItem === false
         ) {
@@ -1151,7 +1165,7 @@ const multilevelNavSetup = (element, options = {}) => {
     element.classList.add('mln--js-loaded');
     
     // Trigger initialized event
-    element.dispatchEvent(createCustomEvent('initialized.mln'));
+    element.dispatchEvent(mlnCreateCustomEvent('initialized.mln'));
     updateVisibleMenu();
     mlnCurrent++;
     
@@ -1180,14 +1194,11 @@ const multilevelNav = (selector, options) => {
     return instances;
 }
 
-// Write a jquery initializer for the multilevelNav function
+// Jquery initialization method using $ or jQuery
 if (typeof jQuery !== 'undefined') {
     jQuery.fn.multilevelNav = function(options) {
         return this.each(function() {
-            const $this = jQuery(this);
-            const instance = multilevelNav($this, options);
-            
-            $this.data('multilevelNav', instance);
+            multilevelNavSetup(this, options);
         });
     };
 }
